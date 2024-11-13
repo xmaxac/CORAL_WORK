@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@heroicons/react": "^2.1.5",
+    "@heroicons/react": "^1.0.6",
     "axios": "^1.7.7",
     "i18next": "^23.16.5",
     "lucide-react": "^0.456.0",
