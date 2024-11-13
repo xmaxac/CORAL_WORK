@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'gothamBlack';
+  src: url('Gotham-Black.woff2');
+  }
+  @font-face {
+  font-family: 'gothamBlackItalic';
+  src: url('Gotham-BlackItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamBold';
+  src: url('Gotham-Bold.woff2');
+  }
+  @font-face {
+  font-family: 'gothamBoldItalic';
+  src: url('Gotham-BoldItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamBook';
+  src: url('Gotham-Book.woff2');
+  }
+  @font-face {
+  font-family: 'gothamLight';
+  src: url('Gotham-Light.woff2');
+  }
+  @font-face {
+  font-family: 'gothamLightItalic';
+  src: url('Gotham-LightItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamMedium';
+  src: url('Gotham-Medium.woff2');
+  }
+  @font-face {
+  font-family: 'gothamMediumItalic';
+  src: url('Gotham-MediumItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamThin';
+  src: url('Gotham-Thin.woff2');
+  }
+  @font-face {
+  font-family: 'gothamThinItalic';
+  src: url('Gotham-ThinItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamUltra';
+  src: url('Gotham-Ultra.woff2');
+  }
+  @font-face {
+  font-family: 'gothamUltraItalic';
+  src: url('Gotham-UltraItalic.woff2');
+  }
+  @font-face {
+  font-family: 'gothamXLight';
+  src: url('Gotham-XLight.woff2');
+  }
+  @font-face {
+  font-family: 'gothamXLightItalic';
+  src: url('Gotham-XLightItalic.woff2');
+  }

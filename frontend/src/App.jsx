@@ -1,9 +1,14 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
+import Home from './pages/Home/Home'
 
 const App = () => {
   return (
-    <div className='font-bold'>App</div>
+    <div>
+      <Routes>
+        <Route path='/' element={<Home/>}/>
+      </Routes>
+    </div>
   )
 }
 
