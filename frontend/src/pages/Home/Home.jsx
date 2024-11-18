@@ -116,7 +116,7 @@ const Home = () => {
       <div className='max-w-full mx-auto p-6 grid grid-cols-3 gap-6'>
         {/* Map Content */}
         <div className='col-span-2'>
-          <Card className="h-[500px] select-none" >
+          <Card className="h-[512px] select-none" >
             <CardHeader>
               <CardTitle className="flex items-center justify-between" >
                 <div className='flex items-center space-x-2'>
@@ -223,10 +223,10 @@ const Home = () => {
 
           {/* Recent Reports */}
           <Card className="select-none" >
-            <CardHeader>
+            <CardHeader className="py-3" >
               <CardTitle className="text-lg">Recent Reports</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-4" >
               <div className='space-y-1' >
                 <Alert>
                   <ShieldAlert className="h-4 w-4"/>
