@@ -133,7 +133,7 @@ const NewReport = () => {
     setStatus(({type: 'loading', message: 'Submitting your report...'}));
 
     try {
-      const response = await axios.post("http://localhost:4000/report/create", data);
+      const response = await axios.post("http://localhost:4000/api/report/create", data);
       if (response.data.success) {
         setStatus({ type: 'success', message: 'Thank You! Your report has been successfully submitted.' });
         setData({
