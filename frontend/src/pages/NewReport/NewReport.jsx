@@ -9,7 +9,6 @@ import { MapPin, Calendar, Globe, Send, User, Mail, FileText, ShieldAlert, Searc
 import { MapContainer, TileLayer, Marker, useMapEvents, ZoomControl, LayersControl} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import Navbar from '../../components/Home/Navbar/Navbar';
 import axios from 'axios';
 
 const {BaseLayer} = LayersControl;
@@ -159,7 +158,6 @@ const NewReport = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      <Navbar/>
       <div className='max-w-6xl mx-auto p-6'>
         <div className='grid grid-cols-3 gap-6'>
           {/*Main Form */}

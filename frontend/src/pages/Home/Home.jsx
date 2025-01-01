@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import Navbar from '../../components/Home/Navbar/Navbar'
 import axios from "axios";
 import {
   Map,
@@ -111,7 +110,6 @@ const Home = () => {
 
   return (
     <div>
-      <Navbar/>
       {/* Main Content */}
       <div className='max-w-full mx-auto p-6 grid grid-cols-3 gap-6'>
         {/* Map Content */}
