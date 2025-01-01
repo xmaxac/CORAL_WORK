@@ -1,8 +1,7 @@
 import express from "express";
 import cors from "cors"
 import reportRouter from "./routes/reportRouter.js";
-import bodyParser from "body-parser";
-
+import userRouter from "./routes/authRouter.js";
 const app = express()
 const port = 4000
 
@@ -18,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //endpoints
 app.use("/report", reportRouter)
+app.use("/auth", userRouter)
 
 
 app.get("/", (req, res) => {

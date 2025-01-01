@@ -4,9 +4,21 @@ CREATE TABLE users (
 	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	email VARCHAR(255) UNIQUE,
 	name VARCHAR(255),
-	is_guest BOOLEAN DEFAULT true,
-	guest_identifier VARCHAR(10),
+	username VARCHAR(255) UNIQUE,
+	profile_image VARCHAR(255),
+  cover_image VARCHAR(255),
+	bio TEXT,
+	link VARCHAR(255),
+	password VARCHAR(255),
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE followers (
+    follower_id UUID NOT NULL,
+    followed_id UUID NOT NULL,
+    FOREIGN KEY (follower_id) REFERENCES users(id),
+    FOREIGN KEY (followed_id) REFERENCES users(id),
+    PRIMARY KEY (follower_id, followed_id)
 );
 
 CREATE TABLE reports (

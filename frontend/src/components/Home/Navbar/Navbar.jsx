@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import "../../../fonts/Gotham/GothamFont.css";
 import {
@@ -7,11 +7,19 @@ import {
   DatabaseIcon,
   PlusIcon,
 } from "@heroicons/react/solid";
+import { AppContext } from "@/context/AppContext";
 
-const Navbar = () => {
+const Navbar = ({setShowLogin}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState("home");
+  const {token, setToken} = useContext(AppContext);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    navigate("/")
+  }
 
   useEffect(() => {
     const path = location.pathname.substring(1) || "home";
@@ -72,7 +80,7 @@ const Navbar = () => {
         {location.pathname !== '/report' && (
           <div
             onClick={() => navigate("/report")}
-            className="absolute w-[130px] right-[5%] p-2 rounded-md bg-blue-500 text-white items-center justify-center hover:cursor-pointer hover:bg-blue-800"
+            className="absolute w-[130px] right-[9%] p-2 rounded-md bg-blue-500 text-white items-center justify-center hover:cursor-pointer hover:bg-blue-800"
           >
             <span className="flex items-center justify-center">
               <PlusIcon className="w-[18px] mr-1" />
@@ -80,6 +88,19 @@ const Navbar = () => {
             </span>
           </div>
         )}
+        {!token?
+          <div
+            onClick={() => setShowLogin(true)}
+            className="absolute w-[75px] right-[24px] p-2 rounded-md bg-blue-500 text-white items-center justify-center hover:cursor-pointer hover:bg-blue-800"
+          >
+            <span className="flex items-center justify-center">
+              Sign Up
+            </span>
+          </div>
+         :
+         <>
+         </>
+         }
       </nav>
     </div>
   );
