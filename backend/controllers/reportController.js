@@ -229,7 +229,7 @@ export const getAllReports = async (req, res) => {
   }
 }
 
-export const getUserPosts = async (req, res) => {
+export const getUserReports = async (req, res) => {
   const client = await pool.connect();
   const {username} = req.params;
 

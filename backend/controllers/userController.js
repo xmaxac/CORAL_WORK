@@ -66,25 +66,6 @@ export const followUnfollowUser = async (req, res) => {
   }
 }
 
-// export const getNotifications = async (req, res) => {
-//   const client = await pool.connect();
-//   const userId = req.user.id;
-
-//   try {
-//     const notifications = await client.query(
-//       'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC',
-//       [userId]
-//     );
-
-//     res.status(200).json(notifications.rows);
-//   } catch (e) {
-//     console.error("Error in getNotifications: ",e.message);
-//     res.status(500).send("Server Error");
-//   } finally {
-//     client.release();
-//   }
-// }
-
 export const getSuggestedUsers = async (req, res) => {
   const userId = req.user.id;
   const client = await pool.connect();
