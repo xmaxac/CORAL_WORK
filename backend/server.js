@@ -3,6 +3,7 @@ import cors from "cors"
 import reportRouter from "./routes/reportRouter.js";
 import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
+import notificationRouter from "./routes/notificationRouter.js";
 import dotenv from "dotenv"
 import {v2 as cloudinary} from "cloudinary"
 
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/report", reportRouter)
 app.use("/api/auth", authRouter)
 app.use("/api/user", userRouter)
+app.use("/api/notification", notificationRouter)
 
 
 app.get("/", (req, res) => {
