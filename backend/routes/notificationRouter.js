@@ -1,9 +1,9 @@
 import express from "express";
-import auth from "../middleware/auth";
-import { getNotifications } from "../controllers/notificationController";
-import { deleteNotification } from "../controllers/notificationController";
+import auth from "../middleware/auth.js";
+import { getNotifications } from "../controllers/notificationController.js";
+import { deleteNotification } from "../controllers/notificationController.js";
 
-notificationRouter = express.Router()
+const notificationRouter = express.Router()
 
 notificationRouter.get("/", auth, getNotifications)
 notificationRouter.delete("/", auth, deleteNotification)

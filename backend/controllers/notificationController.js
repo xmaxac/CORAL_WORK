@@ -1,4 +1,4 @@
-import pool from "../database/db";
+import pool from "../database/db.js";
 
 export const getNotifications = async (req, res) => {
   const client = await pool.connect();

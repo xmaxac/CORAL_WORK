@@ -1,36 +1,80 @@
 import pool from "../database/db.js"
 import bcrypt from "bcrypt"
-import {v2 as cloudinary} from "cloudinary"
+import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
+import redisClient from "../config/redis.js";
+import { uploadToS3, deleteFromS3 } from "../config/s3.js";
 
-export const getUserProfile = async (req, res) => {
-  const client = await pool.connect();
-  const { username } = req.params;
-  try {
-    const user = await client.query("SELECT * FROM users WHERE username = $1", [username]);
+const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) => {
+  if (!fileBuffer) return existingImageUrl;
 
-    if (!user) {
-      return res.status(404).json({success:false, message: "User not found" });
+  if (existingImageUrl) {
+    try {
+      await deleteFromS3(existingImageUrl);
+    } catch (e) {
+      console.error('Error deleting existing image:', e.message);
     }
-
-    res.status(200).json(user.rows[0]);
-  } catch (e) {
-    console.error("Error in getUserProfile: ",e.message);
-    res.status(500).send("Server Error");
-  } finally {
-    client.release();
   }
-}
+
+  try {
+    const fileName = `${userId}-profile-${Date.now()}.jpeg`;
+    const imageUrl = await uploadToS3(fileBuffer, `users/${userId}`, fileName);
+    return imageUrl;
+  } catch (e) {
+    console.error('Error uploading image:', e);
+    throw new Error('Error uploading image:', e);
+  }
+};
+
+export const getUserProfile = [
+  cacheMiddleware('userProfile', 1800),
+  async (req, res) => {
+    const client = await pool.connect();
+    const { username } = req.params;
+    try {
+      const userResult = await client.query(
+        `SELECT
+          u.id, u.username, u.name, u.bio, u.link, u.profile_image, u.cover_image, u.created_at,
+          COUNT(DISTINCT f1.follower_id) AS followers_count,
+          COUNT(DISTINCT f2.followed_id) AS following_count,
+          EXISTS (
+          SELECT 1 FROM followers
+          WHERE follower_id = $2 AND followed_id = u.id
+          ) as is_following
+        FROM users u
+        LEFT JOIN followers f1 on u.id = f1.followed_id
+        LEFT JOIN followers f2 on u.id = f2.follower_id
+        WHERE u.username = $1
+        GROUP BY u.id`,
+        [username, req.user?.id || null]
+      );
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      const user = userResult.rows[0];
+      delete user.password;
+
+      res.status(200).json(user);
+    } catch (e) {
+      console.error("Error in getUserProfile: ", e.message);
+      res.status(500).send("Server Error");
+    } finally {
+      client.release();
+    }
+  }
+];
 
 export const followUnfollowUser = async (req, res) => {
   const client = await pool.connect();
   const { id } = req.params;
   const userId = req.user.id;
-  const {action} = req.body;
+  const { action } = req.body;
 
   try {
 
     if (id === userId.toString()) {
-      return res.status(400).json({success:false, message: "You cannot follow/unfollow yourself"});
+      return res.status(400).json({ success: false, message: "You cannot follow/unfollow yourself" });
     }
     //follow user
     if (action === 'follow') {
@@ -38,28 +82,28 @@ export const followUnfollowUser = async (req, res) => {
         'INSERT INTO followers (follower_id, following_id) VALUES ($1, $2)',
         [userId, id]
       );
-      res.status(200).json({success:true, message: "User followed successfully"})
+      res.status(200).json({ success: true, message: "User followed successfully" })
       await client.query(
         'INSERT INTO notifications (user_id, message, type) VALUES ($1, $2, $3)',
         [id, `${req.user.username} started following you`, 'follow']
       )
-    //unfollow user
+      //unfollow user
     } else if (action === 'unfollow') {
       await client.query(
         'DELETE FROM follower WHERE follower_id = $1 AND following_id = $2',
         [userId, id]
       );
-      res.status(200).json({success:true, message: "User unfollowed successfully"})
+      res.status(200).json({ success: true, message: "User unfollowed successfully" })
       await client.query(
         'INSERT INTO notifications (user_id, message, type) VALUES ($1, $2, $3)',
         [id, `${req.user.username} unfollowed you`, 'unfollow']
       )
     } else {
-      res.status(400).json({success:false, message: "Invalid action"})
+      res.status(400).json({ success: false, message: "Invalid action" })
     }
     //Send notification to user
   } catch (e) {
-    console.error("Error in followUnfollowUser: ",e.message);
+    console.error("Error in followUnfollowUser: ", e.message);
     res.status(500).send("Server Error");
   } finally {
     client.release();
@@ -89,7 +133,7 @@ export const getSuggestedUsers = async (req, res) => {
 
     res.status(200).json(suggestedUsers);
   } catch (e) {
-    console.error("Error in getSuggestedUsers: ",e.message);
+    console.error("Error in getSuggestedUsers: ", e.message);
     res.status(500).send("Server Error");
   } finally {
     client.release();
@@ -98,28 +142,36 @@ export const getSuggestedUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const client = await pool.connect();
-  const { name, email, username, currentPassword, newPassword, bio, link} = req.body;
-  let {profileImg, coverImg} = req.body;
+  const { name, email, username, currentPassword, newPassword, bio, link } = req.body;
+  let profileImg = req.files?.profileImg ? req.files.profileImg[0].buffer : null;
+  let coverImg = req.files?.coverImg ? req.files.coverImg[0].buffer : null;
 
   const userId = req.user.id;
 
   try {
-    let user = await client.query("SELECT * FROM users WHERE id = $1", [userId]);
-    if (!user) {
-      return res.status(404).json({success:false, message: "User not found" });
+    await client.query("BEGIN");
+
+    const userResult = await client.query(
+      'SELECT * FROM users WHERE id = $1',
+      [userId]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    const user = userResult.rows[0];
+
     if ((!newPassword && currentPassword) || (newPassword && !currentPassword)) {
-      return res.status(400).json({success:false, message: "Please enter both current and new password" });
+      return res.status(400).json({ success: false, message: "Please enter both current and new password" });
     }
 
     if (currentPassword && newPassword) {
-      const validPassword = await bcrypt.compare(currentPassword, user.rows[0].password);
+      const validPassword = await bcrypt.compare(currentPassword, user.password);
       if (!validPassword) {
-        return res.status(400).json({success:false, message: "Invalid password" });
+        return res.status(400).json({ success: false, message: "Invalid password" });
       }
       if (newPassword.length < 6) {
-        return res.status(400).json({success:false, message: "New Password must be at least 6 characters" });
+        return res.status(400).json({ success: false, message: "New Password must be at least 6 characters" });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -130,42 +182,59 @@ export const updateUser = async (req, res) => {
       );
     }
 
-    if (profileImg) {
-      profileImgResult = await client.query(
-        'SELECT profile_img FROM users WHERE id = $1',
-        [userId]
-      )
-      if(profileImgResult.rows[0].profile_img) {
-        await cloudinary.uploader.destroy(profileImgResult.rows[0].profile_img.split("/").pop().split(".")[0]);
+    try {
+      if (profileImg) {
+        profileImg = await processImageUpload(profileImg, user.profile_image, userId);
       }
-
-      const uploadedResponse = await cloudinary.uploader.upload(profileImg);
-      profileImg = uploadedResponse.secure_url;
+      if (coverImg) {
+        coverImg = await processImageUpload(coverImg, user.cover_image, userId);
+      }
+    } catch (e) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: "Image upload failed" });
     }
 
-    if (coverImg) {
-      coverImgResult = await client.query(
-        'SELECT cover_img FROM users WHERE id = $1',
-        [userId]
-      )
-      if(coverImgResult.rows[0].coverImg) {
-        await cloudinary.uploader.destroy(coverImgResult.rows[0].coverImg.split("/").pop().split(".")[0]);
-      }
-
-      const uploadedResponse = await cloudinary.uploader.upload(coverImg);
-      coverImg = uploadedResponse.secure_url;
-    }
-
-    await client.query(
-      'UPDATE users SET name = $1, email = $2, username = $3, bio = $4, link = $5, profile_img = $6, cover_img = $7 WHERE id = $8',
+    const updatedUser = await client.query(
+      `UPDATE users
+      SET name = COALESCE($1, name),
+          email = COALESCE($2, email),
+          username = COALESCE($3, username),
+          bio = COALESCE($4, bio),
+          link = COALESCE($5, link),
+          profile_image = COALESCE($6, profile_image),
+          cover_image = COALESCE($7, cover_image),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $8
+      RETURNING id, name, email, username, bio, link, profile_image, cover_image, created_at, updated_at`,
       [name, email, username, bio, link, profileImg, coverImg, userId]
     );
 
-    return res.status(200).json({success:true, message: "User updated", user: {name, email, username, bio, link, profileImg, coverImg}});
+    await client.query("COMMIT");
+
+    const updatedUserData = updatedUser.rows[0];
+    const key = `userProfile:/api/user/profile/${updatedUserData.username}`;
+    await deleteCacheByPattern(key)
+    console.log('Cache cleared');
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: updatedUserData,
+      cover: coverImg,
+      profile: profileImg,
+    });
 
   } catch (e) {
-
+    await client.query("ROLLBACK");
+    if (e.constraint === 'users_username_key') {
+      return res.status(400).json({ success: false, message: "Username is already taken" });
+    }
+    if (e.constraint === 'users_email_key') {
+      return res.status(400).json({ success: false, message: "Email is already taken" });
+    }
+    console.error("Error in updateUser: ", e.message);
+    res.status(500).json({ success: false, message: "Server Error" });
   } finally {
     client.release();
   }
-}
+};

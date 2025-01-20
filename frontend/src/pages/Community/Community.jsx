@@ -1,10 +1,91 @@
-import React from 'react'
+import axios from "axios";
+import React, { useEffect, useState, useContext } from "react";
+import Reports from "@/components/community/Reports";
+import { AppContext } from "@/context/AppContext";
+import { toast } from "react-toastify";
+import LatestNewsSidebar from "@/components/community/LatestNewsSidebar";
 
 const Community = () => {
-  return (
-    <div>
-    </div>
-  )
-}
+  const { token, url, user } = useContext(AppContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const [REPORTS, setREPORTS] = useState({});
 
-export default Community
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`${url}/api/report/all`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = response.data.reports;
+        setREPORTS(data);
+      } catch (e) {
+        if (e.response && e.response.status === 401) {
+          toast.error("You are not authorized to view this page", {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true,
+          });
+        } else {
+          toast.error("Something went wrong", {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true,
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [token, url]);
+
+  const handleDelete = (reportId) => {
+    setREPORTS((prevREPORTS) =>
+      prevREPORTS.filter((report) => report.id !== reportId)
+    );
+  };
+
+  return (
+    <>
+      {token ? (
+        <>
+          {isLoading && (
+            <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+              <div className="text-white">Loading...</div>
+            </div>
+          )}
+          {!isLoading && REPORTS?.length === 0 && (
+            <p className="text-center my-4">No Reports👻</p>
+          )}
+          {!isLoading && REPORTS?.length > 0 && (
+            <div className="flex">
+              <div>
+                {REPORTS.map((report) => (
+                  <Reports
+                    key={report.id}
+                    report={report}
+                    currentUserId={user?.id}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+              <LatestNewsSidebar/>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-center text-xl">Sign in/Sign Up to view this page</p>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Community;

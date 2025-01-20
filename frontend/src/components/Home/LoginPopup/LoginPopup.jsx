@@ -5,10 +5,10 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const LoginPopup = ({setShowLogin}) => {
-
   const {url, setToken} = useContext(AppContext)
-
   const [currState, setCurrState] = useState("Sign Up")
+  const [verificationMode, setVerificationMode] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
   const [data, setData] = useState({
     name:"",
     username:"",
@@ -22,32 +22,113 @@ const LoginPopup = ({setShowLogin}) => {
     setData(data=>({...data,[name]:value}))
   }
 
+  const verifyEmail = async (e) => {
+    try {
+      const response = await axios.get(`${url}/api/auth/verify/${verificationCode}/${data.email}`)
+      if (response.data.success) {
+        toast.success("Email verified successfully", {
+          position: 'top-center',
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+        
+        // console.log(`token, ${response.data.token}`);
+        // setToken(response.data.token);
+        // localStorage.setItem("token", response.data.token);
+        setShowLogin(false);
+        toast.success("Logged in successfully", {
+          position: 'top-center',
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+      }
+    } catch (e) {
+      console.error("Error response:", e.response?.data);
+      toast.error(e.response?.data?.message || "Verification failed", {
+        position: 'top-center',
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    }
+  }
+
+  // In LoginPopup.jsx
   const onLogin = async (event) => {
     event.preventDefault()
     let newUrl = url;
-    if (currState==="Login") {
-      newUrl += "/api/auth/login"
-    }
-    else {
-      newUrl += "/api/auth/register"
+    if (currState === "Login") {
+        newUrl += "/api/auth/login"
+    } else {
+        newUrl += "/api/auth/register"
     }
 
-    try{
-      const response = await axios.post(newUrl, data);
-      if (response.data.success) {
-        setToken(response.data.token);
-        localStorage.setItem("token", response.data.token);
-        setShowLogin(false)
-        toast.success("Logged in successfully")
-      }
+    try {
+        const response = await axios.post(newUrl, data);
+        if (response.data.success) {
+          const token = response.data.token;
+          if (currState === "Sign Up") {
+            setVerificationMode(true);
+            setToken(token);
+            localStorage.setItem("token", token);
+            toast.success("Account created successfully", {
+              position: 'top-center',
+              autoClose: 2000,
+              hideProgressBar: true,
+            });
+          } else {
+            setToken(response.data.token);
+            // Also set the user immediately
+            localStorage.setItem("token", response.data.token);
+            // Optionally store user data too
+            setShowLogin(false);
+            toast.success("Logged in successfully", {
+              position: 'top-center',
+              autoClose: 2000,
+              hideProgressBar: true,
+            });
+          }
+        } else {
+          toast.error("Authentication failed", {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: true,
+          });
+        }
     } catch (e) {
-      console.error("Error during login:", e);
-    if (e.response && e.response.data && e.response.data.message) {
-      toast.error(e.response.data.message);
-    } else {
-      toast.error("An error occurred during login. Please try again.");
+        console.error("Error response:", e.response?.data);
+        toast.error(e.response?.data?.message || "Login failed", {
+          position: 'top-center',
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
     }
-    }
+  }
+
+  if (verificationMode) {
+    return (
+      <div className='absolute z-[1000] w-full h-full bg-[#00000090] grid'>
+        <div className='place-self-center w-[max(23vw,330px)] text-[#808080] bg-white flex flex-col gap-[25px] px-[30px] py-[25px] rounded-[8px] text-sm animate-fadeIn'>
+          <div className='flex justify-between items-center text-black'>
+            <h2>Email Verification</h2>
+            <X onClick={() => setShowLogin(false)} className='w-4 cursor-pointer'/>
+          </div>
+          <p>Please Enter the verification code sent to your email.</p>
+          <input 
+            className='outline-none border border-[#c9c9c9] p-[10px] rounded-sm'
+            text='text'
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            placeholder='Enter Verification Code'
+          />
+          <button
+            className='border border-none p-[10px] rounded-sm text-white bg-blue-500 text-[15px] cursor-pointer'
+            onClick={verifyEmail}
+          >
+            Verify Email
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
