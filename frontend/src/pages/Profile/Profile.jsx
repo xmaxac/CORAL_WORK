@@ -411,7 +411,7 @@ const Profile = () => {
           ): profile ? (
           <>
             <div className="flex gap-10 px-4 py-2 items-center">
-              <Link to="/database">
+              <Link to="/">
                 <ArrowLeft size={24} />
               </Link>
               <div className="flex flex-col">

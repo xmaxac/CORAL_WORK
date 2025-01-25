@@ -10,6 +10,7 @@ import {GoogleMap, LoadScript, Autocomplete, Marker} from '@react-google-maps/ap
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AppContext } from '@/context/AppContext';
+import { useTranslation } from 'react-i18next';
 
 
 const libraries = ['places']
@@ -32,6 +33,7 @@ const NewReport = () => {
   const [status, setStatus] = useState({type: '', message: ''});
   const mapRef = useRef(null);
   const autoCompleteRef = useRef(null);
+  const {t} = useTranslation();
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -219,10 +221,10 @@ const NewReport = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText size={24} className='text-blue-500' />
-                  <span>Submit New Report </span>
+                  <span>{t('newReport.form.title')}</span>
                 </CardTitle>
                 <CardDescription>
-                  Help us track and monitor coral health by submitting your observations
+                {t('newReport.form.description')}
                 </CardDescription>
               </CardHeader>
 
@@ -234,7 +236,7 @@ const NewReport = () => {
                     <CardHeader className="py-4">
                       <CardTitle className="text-lg flex items-center space-x-2" >
                         <MapPin size={24} className='text-blue-500' />
-                        <span>Location Details</span>
+                        <span>{t('newReport.form.locationDetails.title')}</span>
                       </CardTitle>
                     </CardHeader>
                     {/*Interactive Map */}
@@ -265,31 +267,31 @@ const NewReport = () => {
                       </div>
                       <div className='grid grid-cols-3 gap-4'>
                         <div className='space-y-2'>
-                          <Label htmlFor="latitude">Latitude*</Label>
+                          <Label htmlFor="latitude">{t('newReport.form.locationDetails.latitude')}</Label>
                           <Input
                             id="latitide"
                             name="latitude"
                             value={parseFloat(data.latitude).toFixed(8)}
                             onChange={handleChange}
-                            placeholder="Click on map"
+                            placeholder={t('newReport.form.locationDetails.placeholder')}
                             readOnly
                             required
                           />
                         </div>
                         <div className='space-y-2'>
-                          <Label htmlFor="longitude">Longitude*</Label>
+                          <Label htmlFor="longitude">{t('newReport.form.locationDetails.longitude')}</Label>
                           <Input
                             id="longitude"
                             name="longitude"
                             value={parseFloat(data.longitude).toFixed(8)}
                             onChange={handleChange}
-                            placeholder="Click on map"
+                            placeholder={t('newReport.form.locationDetails.placeholder')}
                             readOnly
                             required
                           />
                         </div>
                         <div className='space-y-2'>
-                          <Label htmlFor="countryCode">Country Code*</Label>
+                          <Label htmlFor="countryCode">{t('newReport.form.locationDetails.countryCode')}</Label>
                           <div className='relative'>
                             <Globe className="absolute left-2 top-[7px] h04 w-4 text-gray-400" />
                             <Input
@@ -297,7 +299,7 @@ const NewReport = () => {
                               name="countryCode"
                               value={data.countryCode}
                               className="pl-8"
-                              placeholder="Click on map"
+                              placeholder={t('newReport.form.locationDetails.placeholder')}
                               maxLength="2"
                               readOnly
                               required 
@@ -313,12 +315,12 @@ const NewReport = () => {
                     <CardHeader className="py-4">
                       <CardTitle className="text-lg flex items-center space-x-2">
                         <FileText size={18} className='text-blue-500'/>
-                        <span>Report Details</span>
+                        <span>{t('newReport.form.reportDetails.title')}</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className='space-y-2'>
-                        <Label htmlFor="title">Title</Label>
+                        <Label htmlFor="title">{t('newReport.form.reportDetails.reportTitle')}</Label>
                         <div className='relative'>
                           <Pencil className="absolute left-2 top-3 h-4 w-4 text-gray-400" />
                           <Input
@@ -326,7 +328,7 @@ const NewReport = () => {
                             name="title"
                             value={data.title}
                             onChange={handleChange}
-                            placeholder="Enter Report Title"
+                            placeholder={t('newReport.form.reportDetails.reportTitlePlaceholder')}
                             className="pl-8"
                             required
                           />
@@ -336,7 +338,7 @@ const NewReport = () => {
                     </CardContent>
                     <CardContent className="space-y-4">
                       <div className='space-y-2'>
-                        <Label htmlFor="reportDate">Date of Discovery*</Label>
+                        <Label htmlFor="reportDate">{t('newReport.form.reportDetails.dateOfDiscovery')}</Label>
                         <div className='relative'>
                           <Calendar className="absolute left-2 top-3 h-4 w-4 text-gray-400" />
                           <Input
@@ -351,7 +353,7 @@ const NewReport = () => {
                         </div>
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor="photo">Photo Upload</Label>
+                        <Label htmlFor="photo">{t('newReport.form.reportDetails.photoUpload.title')}</Label>
                         <div className='space-y-2'>
                           <Input
                             id="photo"
@@ -370,10 +372,10 @@ const NewReport = () => {
                               className="flex items-center gap-2"
                             >
                               <ImageIcon size={16} />
-                              Add Photos
+                              {t('newReport.form.reportDetails.photoUpload.addPhotos')}
                             </Button>
                             <span className='text-sm text-gray-500'>
-                              {selectedImages?.length} {selectedImages?.length === 1 ? 'photo' : 'photos'} selected
+                              {selectedImages?.length} {`${selectedImages?.length === 1} ` ? `${t('newReport.form.reportDetails.photoUpload.selectedPhotos')}` : `${t('newReport.form.reportDetails.photoUpload.multipleSelectedPhotos')}`}
                             </span>
                           </div>
                           {imagePreviews.length > 0 && (
@@ -404,18 +406,18 @@ const NewReport = () => {
                             </div>
                           )}
                           <p className='text-sm text-gary-500 mt-1'>
-                            Images will be resized to 500X500
+                            {t('newReport.form.reportDetails.photoUpload.resizeNote')}
                           </p>
                         </div>
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">{t('newReport.form.reportDetails.description')}</Label>
                         <Textarea
                           id="description"
                           name="description"
                           value={data.description}
                           onChange={handleChange}
-                          placeholder="Please provide a detailed description of your discovery..."
+                          placeholder={t('newReport.form.reportDetails.descriptionPlaceholder')}
                           className="h-32 resize-none"
                           required
                         />
@@ -441,14 +443,14 @@ const NewReport = () => {
                   setPosition(null);
                 }}
                 >
-                  Clear Form
+                  {t('newReport.form.buttons.clearForm')}
                 </Button>
                 <Button
                 onClick={onSubmit}
                 className="px-4"
                 >
                   <Send className='mr-2 h-4 w-4' />
-                  Submit Form
+                  {t('newReport.form.buttons.submitForm')}
                 </Button>
               </CardFooter>
             </Card>
@@ -461,27 +463,27 @@ const NewReport = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <ShieldAlert size={20} />
-                  <span>Reporting Guidelines</span>
+                  <span>{t('newReport.guidelines.title')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
                   <Alert>
-                    <AlertTitle className="font-medium">Select Location</AlertTitle>
+                    <AlertTitle className="font-medium">{t('newReport.guidelines.selectLocation.title')}</AlertTitle>
                     <AlertDescription>
-                      Click on the map to place a marker at the approximate location of your discovery
+                    {t('newReport.guidelines.selectLocation.description')}
                     </AlertDescription>
                   </Alert>
                   <Alert>
-                    <AlertTitle className="font-medium">Detailed Description</AlertTitle>
+                    <AlertTitle className="font-medium">{t('newReport.guidelines.detailedDescription.title')}</AlertTitle>
                     <AlertDescription>
-                      Include observation about coral condition, water quality, and surrounding enviroment
+                    {t('newReport.guidelines.detailedDescription.description')}
                     </AlertDescription>
                   </Alert>
                   <Alert>
-                    <AlertTitle className="font-medium">Recent Discovery</AlertTitle>
+                    <AlertTitle className="font-medium">{t('newReport.guidelines.recentDiscovery.title')}</AlertTitle>
                     <AlertDescription>
-                      Report findings within 48 hours for most effective monitoring 
+                    {t('newReport.guidelines.recentDiscovery.description')}
                     </AlertDescription>
                   </Alert>
                 </div>

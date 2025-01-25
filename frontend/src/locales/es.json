@@ -1,0 +1,274 @@
+{
+  "global": {
+    "signToView": "Inicia sesión/Regístrate para ver esta página",
+    "vh": "3vh",
+    "spacex": "space-x-2"
+  },
+  "home": {
+    "navbar": {
+      "info": "Información sobre SCTLD",
+      "database": "Análisis de Datos",
+      "community": "Comunidad",
+      "detection": "Detección de Enfermedades"
+    },
+    "buttons": {
+      "signUp": "Registrarse",
+      "logout": "Cerrar Sesión",
+      "newReport": "Nuevo Informe",
+      "profile": "Perfil"
+    },
+    "landing": {
+      "title": "Plataforma Unificada de Monitoreo de la Enfermedad de Pérdida de Tejido de Coral Duro",
+      "subtext": "Únete a la comunidad global que rastrea la Enfermedad de Pérdida de Tejido de Coral Duro (SCTLD). Registra observaciones, analiza datos y colabora con investigadores de todo el mundo para proteger los ecosistemas de arrecifes de coral.",
+      "feature": {
+        "global": {
+          "title": "Mapeo Global de Enfermedades",
+          "subtext": "Rastrea la propagación de SCTLD"
+        },
+        "data": {
+          "title": "Herramientas de Análisis de Datos",
+          "subtext": "Monitoreo unificado de la salud de los corales"
+        },
+        "auto": {
+          "title": "Detección Automatizada",
+          "subtext": "Análisis de enfermedades con IA"
+        },
+        "research": {
+          "title": "Comunidad de Investigación",
+          "subtext": "Descubra y conéctese con la comunidad global que supervisa la enfermedad de pérdida de tejido de coral macizo."
+        }
+      }
+    }
+  },
+  "info": {
+    "hero": {
+      "title": "Comprendiendo la Enfermedad de Pérdida de Tejido de Coral Pétreo",
+      "subtitle": "Únete a la lucha contra una de las enfermedades de coral más letales que amenazan nuestros arrecifes",
+      "buttons": {
+        "report": "Reportar EPTC",
+        "learnMore": "Más Información"
+      }
+    },
+    "tabs": {
+      "overview": "Visión General",
+      "causes": "Causas y Propagación",
+      "species": "Especies Afectadas", 
+      "treatment": "Tratamiento"
+    },
+    "overview": {
+      "title": "¿Qué es la EPTC?",
+      "description": "La EPTC (Enfermedad de Pérdida de Tejido de Coral Pétreo) es una enfermedad de coral altamente letal que se identificó por primera vez en la costa de Miami, Florida, en 2014. La enfermedad se presenta como lesiones blancas de rápida propagación en colonias de coral que pueden matar colonias enteras en semanas o meses. Afecta a más de 20 especies diferentes de corales duros, siendo algunos como los corales cerebrales y los corales pilar particularmente susceptibles. A diferencia de otras enfermedades de coral, la EPTC ha demostrado ser inusualmente persistente y virulenta, propagándose por todo el Mar Caribe y causando tasas de mortalidad de coral sin precedentes. Los científicos creen que es causada por patógenos bacterianos, aunque la causa exacta sigue siendo investigada. La enfermedad ha tenido impactos devastadores en los ecosistemas de arrecifes de coral, con algunas áreas experimentando hasta un 60-100% de mortalidad en especies susceptibles, lo que genera consecuencias ecológicas y económicas significativas para las regiones afectadas.",
+      "economicImpact": {
+        "title": "Impacto Económico",
+        "items": [
+          "Pérdidas de ingresos por turismo estimadas en millones anualmente",
+          "Disminución de la productividad pesquera",
+          "Aumento de los costos de protección costera"
+        ]
+      },
+      "ecologicalImpact": {
+        "title": "Impacto Ecológico",
+        "items": [
+          "Reducción de la biodiversidad de arrecifes",
+          "Pérdida de hábitat crítico para peces",
+          "Debilitamiento de la protección costera"
+        ]
+      },
+      "timeline": {
+        "title": "Cronología de la EPTC",
+        "2014": "Primer reporte en el Condado de Miami-Dade, Florida",
+        "2016": "Propagación a los Cayos de Florida",
+        "2018": "Llegada a las islas del Caribe",
+        "present": "Propagación continua y esfuerzos de investigación en curso"
+      }
+    },
+    "causes": {
+      "title": "Causas y Transmisión",
+      "subtitle": "Comprender cómo se propaga la EPTC es crucial para controlar su impacto en los ecosistemas de arrecifes.",
+      "transmissionMethods": {
+        "directContact": {
+          "title": "Contacto Directo",
+          "description": "Cuando los corales enfermos tocan físicamente corales sanos, la enfermedad puede transferirse directamente entre colonias. Esto sucede a menudo en áreas de arrecife densas donde las colonias crecen cerca una de otra."
+        },
+        "waterTransmission": {
+          "title": "Transmisión por Agua",
+          "description": "Los patógenos de la enfermedad pueden moverse a través del agua de mar, permitiendo que la EPTC infecte corales sin contacto directo.",
+          "risks": [
+            "Saltar entre brechas del arrecife",
+            "Propagarse a largas distancias a través de corrientes oceánicas",
+            "Potencial transmisión a través del agua de lastre de barcos"
+          ]
+        },
+        "sedimentTransport": {
+          "title": "Transporte de Sedimentos",
+          "description": "Hay evidencia de que las bacterias causantes de la enfermedad pueden sobrevivir en sedimentos marinos, que pueden ser removidos por:",
+          "causes": [
+            "Eventos de tormenta",
+            "Acción de las olas", 
+            "Actividades humanas como dragado",
+            "Tráfico marítimo"
+          ]
+        },
+        "secondaryVectors": {
+          "title": "Vectores Secundarios",
+          "description": "Aunque no está completamente confirmado, los investigadores sospechan que ciertos organismos marinos podrían ayudar a propagar la enfermedad:",
+          "methods": [
+            "Moviéndose entre corales infectados y sanos",
+            "Transportando agentes causantes de enfermedades en sus cuerpos",
+            "Potencialmente alimentándose de tejido de coral enfermo y luego visitando colonias sanas"
+          ]
+        }
+      },
+      "contributingFactors": {
+        "title": "Factores Contribuyentes",
+        "climateChange": {
+          "title": "Impacto del Cambio Climático",
+          "items": [
+            "Aumento de la temperatura del agua",
+            "Acidificación oceánica", 
+            "Cambios en la química del agua"
+          ]
+        },
+        "humanActivities": {
+          "title": "Actividades Humanas",
+          "items": [
+            "Desarrollo costero",
+            "Contaminación del agua",
+            "Tráfico marítimo"
+          ]
+        }
+      },
+      "researchResources": {
+        "title": "Recursos de Investigación",
+        "scientificStudies": "Últimos Estudios Científicos",
+        "downloadSummary": "Descargar Resumen de Investigación"
+      }
+    },
+    "species": {
+      "title": "Especies de Coral Afectadas",
+      "subtitle": "Susceptibilidad de especies y roles ecológicos",
+      "categories": {
+        "highlyAffected": {
+          "title": "Especies Altamente Susceptibles",
+          "tooltip": "Rol Ecológico"
+        },
+        "moderatelyAffected": {
+          "title": "Especies Moderadamente Susceptibles",
+          "tooltip": "Rol Ecológico"
+        },
+        "resistant": {
+          "title": "Especies Resistentes",
+          "tooltip": "Rol Ecológico"
+        }
+      }
+    },
+    "treatment": {
+      "title": "Métodos de Tratamiento",
+      "subtitle": "Enfoques actuales e investigación en curso",
+      "currentTreatments": {
+        "title": "Tratamientos Actuales",
+        "antibiotics": {
+          "title": "Aplicación de Antibióticos",
+          "description": "Pasta a base de amoxicilina aplicada directamente en colonias infectadas",
+          "details": [
+            "70-90% de tasa de éxito cuando se aplica temprano",
+            "Requiere aplicación manual por buzos",
+            "Intensivo en tiempo y recursos"
+          ]
+        },
+        "probiotics": {
+          "title": "Tratamientos Probióticos",
+          "description": "Tratamientos experimentales utilizando bacterias beneficiosas para combatir la EPTC"
+        }
+      },
+      "challenges": {
+        "title": "Desafíos del Tratamiento",
+        "items": [
+          "Gran escala de áreas afectadas",
+          "Recursos y financiamiento limitados",
+          "Dificultad en la detección temprana",
+          "Factores ambientales que afectan la eficacia del tratamiento"
+        ]
+      },
+      "getInvolved": {
+        "title": "Involúcrate en la Lucha contra la EPTC",
+        "volunteerButton": "Voluntariado para Equipos de Tratamiento",
+        "supportButton": "Apoyar Esfuerzos de Investigación"
+      }
+    },
+    "callToAction": {
+      "title": "¡Únete a la Lucha contra la EPTC!",
+      "buttons": {
+        "report": "Reportar Casos",
+        "volunteer": "Voluntariado",
+        "resources": "Descargar Recursos"
+      }
+    }
+  },
+  "data": {
+    "map": {
+      "title": "Distribución Global de SCTLD"
+    },
+    "country": {
+      "title": "# de Informes de SCTLD por Ubicación"
+    },
+    "recentReports": {
+      "title": "Informes Recientes"
+    },
+    "none": {
+      "reports": "No hay Informes Recientes👻",
+      "country": "No hay Datos por País👻"
+    }
+  },
+  "community": {
+  "none": "No hay informes👻"
+  },
+  "newReport": {
+    "form": {
+      "title": "Enviar Nuevo Informe",
+      "description": "Ayúdanos a rastrear y monitorear la salud de los corales enviando tus observaciones",
+      "locationDetails": {
+        "title": "Detalles de Ubicación",
+        "latitude": "Latitud*",
+        "longitude": "Longitud*",
+        "countryCode": "Código de País*",
+        "placeholder": "Haz clic en el mapa",
+        "searchLocation": "Buscar ubicación..."
+      },
+      "reportDetails": {
+        "title": "Detalles del Informe",
+        "reportTitle": "Título",
+        "reportTitlePlaceholder": "Ingresa el título del informe",
+        "dateOfDiscovery": "Fecha del Descubrimiento*",
+        "photoUpload": {
+          "title": "Subir Fotos",
+          "addPhotos": "Agregar Fotos",
+          "selectedPhotos": "foto seleccionada",
+          "multipleSelectedPhotos": "fotos seleccionadas",
+          "resizeNote": "Las imágenes se redimensionarán a 500X500"
+        },
+        "description": "Descripción",
+        "descriptionPlaceholder": "Por favor, proporciona una descripción detallada de tu descubrimiento..."
+      },
+      "buttons": {
+        "clearForm": "Limpiar Formulario",
+        "submitForm": "Enviar Formulario"
+      }
+    },
+    "guidelines": {
+      "title": "Guías para el Informe",
+      "selectLocation": {
+        "title": "Seleccionar Ubicación",
+        "description": "Haz clic en el mapa para colocar un marcador en la ubicación aproximada de tu descubrimiento"
+      },
+      "detailedDescription": {
+        "title": "Descripción Detallada",
+        "description": "Incluye observaciones sobre la condición del coral, la calidad del agua y el entorno circundante"
+      },
+      "recentDiscovery": {
+        "title": "Descubrimiento Reciente",
+        "description": "Informa los hallazgos dentro de las 48 horas para un monitoreo más efectivo"
+      }
+    }
+  }
+}

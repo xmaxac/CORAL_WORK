@@ -1,42 +1,43 @@
 import React from 'react'
 import {Map, Database, Camera, MessageSquare} from 'lucide-react'
+import { useTranslation } from "react-i18next";
 
 const Home = () => {
+  const {t} = useTranslation();
+
   return (
     <div className='min-h-[79vh] bg-white'>
-      <div className='max-w-7xl mt-[10vh] px-4 py-16'>
-        <div className='max-w-7xl flex flex-row justify-between mx-4'>
-          <div className='max-w-xl'>
+      <div className={`max-w-7xl mt-[${t('global.vh')}] px-2 py-16 justify-between`}>
+        <div className='max-w-7xl flex flex-col lg:flex-row justify-between mx-4'>
+          <div className='max-w-lg mr-10 mb-8 lg:mb-0'>
             <h1 className='text-5xl font-bold text-gray-900 mb-6'>
-              Unified Stony Coral Tissue Loss Disease Monitoring Platform
+              {t("home.landing.title")}
             </h1>
             <p className='text-xl text-gray-600 mb-8'>
-                Join the global community tracking Stony Coral Tissue Loss Disease (SCTLD). 
-                Log observations, analyze data, and collaborate with researchers worldwide to 
-                protect coral reef ecosystems.
+                {t("home.landing.subtext")}
             </p>
           </div>
           <div>
-            <div className='grid grid-cols-2 gap-4 mb-8'>
-              <div className='p-4 bg-gray-100 rounded-lg'>
+            <div className='flex flex-wrap gap-4'>
+              <div className='flex-1 p-4 bg-gray-100 rounded-lg min-w-[200px]'>
                 <Map className='w-6 h-6 text-blue-500 mb-2'/>
-                <h3 className='font-semibold mb-1'>Global Disease Mapping</h3>
-                <p>Track the spread of SCTLD</p>
+                <h3 className='font-semibold mb-1'>{t("home.landing.feature.global.title")}</h3>
+                <p>{t("home.landing.feature.global.subtext")}</p>
               </div>
-              <div className='p-4 bg-gray-100 rounded-lg'>
+              <div className='flex-1 p-4 bg-gray-100 rounded-lg min-w-[200px]'>
                 <Database className='w-6 h-6 text-blue-500 mb-2'/>
-                <h3 className='font-semibold mb-1'>Data Analytics Tools</h3>
-                <p>Unified coral health monitoring</p>
+                <h3 className='font-semibold mb-1'>{t("home.landing.feature.data.title")}</h3>
+                <p>{t("home.landing.feature.data.subtext")}</p>
               </div>
-              <div className='p-4 bg-gray-100 rounded-lg'>
+              <div className='flex-1 p-4 bg-gray-100 rounded-lg min-w-[200px]'>
                 <Camera className='w-6 h-6 text-blue-500 mb-2'/>
-                <h3 className='font-semibold mb-1'>Automated Detection</h3>
-                <p>AI-powered disease analysis</p>
+                <h3 className='font-semibold mb-1'>{t("home.landing.feature.auto.title")}</h3>
+                <p>{t("home.landing.feature.auto.subtext")}</p>
               </div>
-              <div className='p-4 bg-gray-100 rounded-lg'>
+              <div className='flex-1 p-4 bg-gray-100 rounded-lg min-w-[200px]'>
                 <MessageSquare className='w-6 h-6 text-blue-500 mb-2'/>
-                <h3 className='font-semibold mb-1'>Research Community</h3>
-                <p>Connect with marine scientists</p>
+                <h3 className='font-semibold mb-1'>{t("home.landing.feature.research.title")}</h3>
+                <p>{t("home.landing.feature.research.subtext")}</p>
               </div>
             </div>
           </div>

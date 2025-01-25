@@ -24,7 +24,7 @@ import { ChartContainer,ChartTooltip, ChartTooltipContent } from '@/components/u
 import { Bar, BarChart, XAxis, YAxis  } from 'recharts';
 import { AppContext } from '@/context/AppContext';
 import {useNavigate} from 'react-router-dom'
-import { data } from 'autoprefixer';
+import { useTranslation } from 'react-i18next';
 
 const libraries = ["places"];
 
@@ -38,6 +38,8 @@ const DataPage = () => {
   const [latestReports, setLatestReports] = useState([]);
   const {token, url} = useContext(AppContext);
   const mapRef = useRef(null);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -139,23 +141,23 @@ const DataPage = () => {
     {token ? (
       <div>
         {/* Main Content */}
-        <div className='max-w-full mx-auto p-6 grid grid-cols-3 gap-6'>
+        <div className='max-w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6'>
           {/* Map Content */}
-          <div className='col-span-2'>
-            <Card className="h-[512px] select-none" >
+          <div className='w-full md:col-span-2'>
+            <Card className="h-[300px] md:h-[512px] select-none" >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between" >
                   <div className='flex items-center space-x-2'>
                     <Map size={20} />
-                    <span>Global SCTLD Distribution</span>
+                    <span>{t('data.map.title')}</span>
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className='bg-slate-100 h-[400px] rounded-lg flex items-center justify-center '>
+              <CardContent >
+                <div className='w-full h-96 mb-6 bg-slate-100 rounded-lg flex items-center justify-center '>
                   <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY} libraries={libraries}>
                     <GoogleMap
-                      mapContainerStyle={{ height: "400px", width: "765px" }}
+                      mapContainerStyle={{ height: "100%", width: "100%" }}
                       center={pos}
                       zoom={6.5}
                       onLoad={map => (mapRef.current = map)}
@@ -203,14 +205,14 @@ const DataPage = () => {
           </div>
 
           {/* Sidebar */}
-          <div className='space-y-3'>
+          <div className='grid grid-cols-1 gap-4'>
             {/* Bar Chart */}
-            <Card className="h-[300px] select-none" >
+            <Card className="h-[250px] md:h-[300px] select-none" >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between" >
                   <div className='flex items-center space-x-2'>
                     <Clipboard size={20}/>
-                    <span># of Reports For SCTLD Per Location</span>
+                    <span>{t('data.country.title')}</span>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -239,7 +241,7 @@ const DataPage = () => {
                       </BarChart>
                     </ChartContainer>
                   ) : (
-                    <p className="text-center my-4">No Country Data👻</p>
+                    <p className="text-center my-4">{t('data.none.country')}</p>
                   )}
                 </div>
               </CardContent>
@@ -248,7 +250,7 @@ const DataPage = () => {
             {/* Recent Reports */}
             <Card className="select-none" >
               <CardHeader className="py-3" >
-                <CardTitle className="text-lg">Recent Reports</CardTitle>
+                <CardTitle className="text-lg">{t('data.recentReports.title')}</CardTitle>
               </CardHeader>
               <CardContent className="pb-4" >
                 {latestReports.length > 0 ? (
@@ -262,7 +264,7 @@ const DataPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center my-4">No Recent Reports👻</p>
+                  <p className="text-center my-4">{t("data.none.reports")}</p>
                 )}
               </CardContent>
             </Card>
@@ -271,7 +273,7 @@ const DataPage = () => {
       </div>
     ) : (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-center text-xl">Sign in/Sign Up to view this page</p>
+        <p className="text-center text-xl">{t('global.signToView')}</p>
       </div>
     )}
     </>
