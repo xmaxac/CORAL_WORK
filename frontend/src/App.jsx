@@ -13,6 +13,7 @@ import PhotoDetection from './pages/PhotoDetection/PhotoDetection'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {X, MessageSquare} from 'lucide-react'
+import Reference from './pages/Info/Reference'
 
 
 const App = () => {
@@ -34,6 +35,7 @@ const App = () => {
         <Route path='/info' element={<Info/>}/>
         <Route path='/profile/:username' element={<Profile/>}/>
         <Route path='/detection' element={<PhotoDetection/>}/>
+        <Route path='/refrences' element={<Reference/>}/>
       </Routes>
       <div>
         <button className='z-[1000] fixed bottom-3 right-[15px] border border-none h-[50px] w-[50px] flex flex-col cursor-pointer rounded-[50%] bg-blue-500 items-center justify-center' onClick={() => setShowChatbot(!showChatbot)}>

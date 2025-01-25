@@ -1,0 +1,274 @@
+{
+  "global": {
+    "signToView": "Sign in/Sign Up to view this page",
+    "vh": "10vh",
+    "spacex": "space-x-8"
+  },
+  "home": {
+    "navbar": {
+      "info": "SCTLD Info",
+      "database": "Data Analytics",
+      "community": "Community",
+      "detection": "Disease Detection"
+    },
+    "buttons": {
+      "signUp": "Sign Up",
+      "logout": "Logout",
+      "newReport": "New Report",
+      "profile": "Profile"
+    },
+    "landing": {
+      "title": "Unified Stony Coral Tissue Loss Disease Monitoring Platform",
+      "subtext": "Join the global community tracking Stony Coral Tissue Loss Disease (SCTLD). Log observations, analyze data, and collaborate with researchers worldwide to protect coral reef ecosystems.",
+      "feature": {
+        "global": {
+          "title": "Global Disease Mapping",
+          "subtext": "Track the spread of SCTLD"
+        },
+        "data": {
+          "title": "Data Analytics Tools",
+          "subtext": "Unified coral health monitoring"
+        },
+        "auto": {
+          "title": "Automated Detection",
+          "subtext": "AI-powered disease analysis"
+        },
+        "research": {
+          "title": "Research Community",
+          "subtext": "Discover and connect with the global community monitoring Stony Coral Tissue Loss Disease."
+        }
+      }
+    }
+  },
+  "info": {
+    "hero": {
+      "title": "Understanding Stony Coral Tissue Loss Disease",
+      "subtitle": "Join the fight against one of the most lethal coral diseases threatening our reefs",
+      "buttons": {
+        "report": "Report SCTLD",
+        "learnMore": "Learn More"
+      }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "causes": "Causes & Spread",
+      "species": "Affected Species", 
+      "treatment": "Treatment"
+    },
+    "overview": {
+      "title": "What is SCTLD?",
+      "description": "SCTLD (Stony Coral Tissue Loss Disease) is a highly lethal coral disease that was first identified off the coast of Miami, Florida in 2014. The disease appears as rapidly spreading white lesions on coral colonies that can kill entire coral colonies within weeks or months. It affects over 20 different species of hard corals, with some species like brain corals and pillar corals being particularly susceptible. Unlike some other coral diseases, SCTLD has proven to be unusually persistent and virulent, spreading throughout the Caribbean Sea and causing unprecedented coral mortality rates. Scientists believe it is caused by bacterial pathogens, though the exact cause remains under investigation. The disease has had devastating impacts on coral reef ecosystems, with some areas experiencing up to 60-100% mortality of susceptible species, leading to significant ecological and economic consequences for affected regions.",
+      "economicImpact": {
+        "title": "Economic Impact",
+        "items": [
+          "Tourism revenue losses estimated at millions annually",
+          "Decreased fisheries productivity",
+          "Increased coastal protection costs"
+        ]
+      },
+      "ecologicalImpact": {
+        "title": "Ecological Impact",
+        "items": [
+          "Reduced reef biodiversity",
+          "Loss of critical fish habitat",
+          "Weakened coastal protection"
+        ]
+      },
+      "timeline": {
+        "title": "Timeline of SCTLD",
+        "2014": "First reported in Florida's Miami-Dade County",
+        "2016": "Spread to the Florida Keys",
+        "2018": "Reached Caribbean islands",
+        "present": "Continued spread and ongoing research efforts"
+      }
+    },
+    "causes": {
+      "title": "Causes and Transmission",
+      "subtitle": "Understanding how SCTLD spreads is crucial for controlling its impact on reef ecosystems.",
+      "transmissionMethods": {
+        "directContact": {
+          "title": "Direct Contact",
+          "description": "When diseased corals physically touch healthy corals, the disease can transfer directly between colonies. This often happens in dense reef areas where colonies grow close together."
+        },
+        "waterTransmission": {
+          "title": "Water Transmission",
+          "description": "The disease pathogens can move through seawater, allowing SCTLD to infect corals without direct contact.",
+          "risks": [
+            "Jump across gaps in the reef",
+            "Spread over longer distances via ocean currents",
+            "Potentially be transmitted through ballast water in ships"
+          ]
+        },
+        "sedimentTransport": {
+          "title": "Sediment Transport",
+          "description": "There's evidence that the disease-causing bacteria can survive in seafloor sediments, which can then be stirred up by:",
+          "causes": [
+            "Storm events",
+            "Wave action", 
+            "Human activities like dredging",
+            "Ship traffic"
+          ]
+        },
+        "secondaryVectors": {
+          "title": "Secondary Vectors",
+          "description": "While not fully confirmed, researchers suspect that certain marine organisms might help spread the disease by:",
+          "methods": [
+            "Moving between infected and healthy corals",
+            "Carrying disease-causing agents on their bodies",
+            "Potentially feeding on diseased coral tissue and then visiting healthy colonies"
+          ]
+        }
+      },
+      "contributingFactors": {
+        "title": "Contributing Factors",
+        "climateChange": {
+          "title": "Climate Change Impact",
+          "items": [
+            "Increased water temperatures",
+            "Ocean acidification", 
+            "Changed water chemistry"
+          ]
+        },
+        "humanActivities": {
+          "title": "Human Activities",
+          "items": [
+            "Coastal development",
+            "Water pollution",
+            "Marine traffic"
+          ]
+        }
+      },
+      "researchResources": {
+        "title": "Research Resources",
+        "scientificStudies": "Latest Scientific Studies",
+        "downloadSummary": "Download Research Summary"
+      }
+    },
+    "species": {
+      "title": "Affected Coral Species",
+      "subtitle": "Species susceptibility and ecological roles",
+      "categories": {
+        "highlyAffected": {
+          "title": "Highly Susceptible Species",
+          "tooltip": "Ecological Role"
+        },
+        "moderatelyAffected": {
+          "title": "Moderately Susceptible Species",
+          "tooltip": "Ecological Role"
+        },
+        "resistant": {
+          "title": "Resistant Species",
+          "tooltip": "Ecological Role"
+        }
+      }
+    },
+    "treatment": {
+      "title": "Treatment Methods",
+      "subtitle": "Current approaches and ongoing research",
+      "currentTreatments": {
+        "title": "Current Treatments",
+        "antibiotics": {
+          "title": "Antibiotic Application",
+          "description": "Amoxicillin-based paste applied directly to infected colonies",
+          "details": [
+            "70-90% success rate when applied early",
+            "Requires manual application by divers",
+            "Time and resource-intensive"
+          ]
+        },
+        "probiotics": {
+          "title": "Probiotic Treatments",
+          "description": "Experimental treatments using beneficial bacteria to combat SCTLD"
+        }
+      },
+      "challenges": {
+        "title": "Treatment Challenges",
+        "items": [
+          "Large scale of affected areas",
+          "Limited resources and funding",
+          "Difficulty in early detection",
+          "Environmental factors affecting treatment efficacy"
+        ]
+      },
+      "getInvolved": {
+        "title": "Get Involved",
+        "volunteerButton": "Volunteer for Treatment Teams",
+        "supportButton": "Support Research Efforts"
+      }
+    },
+    "callToAction": {
+      "title": "Join the Fight Against SCTLD!",
+      "buttons": {
+        "report": "Report Cases",
+        "volunteer": "Volunteer",
+        "resources": "Download Resources"
+      }
+    }
+  },
+  "data": {
+    "map": {
+      "title": "Global SCTLD Distribution"
+    },
+    "country": {
+      "title": "# of Reports For SCTLD Per Location"
+    },
+    "recentReports": {
+      "title": "Recent Reports"
+    },
+    "none": {
+      "reports": "No Recent Reports👻",
+      "country": "No Country Data👻"
+    }
+  },
+  "community": {
+    "none": "No Reports👻"
+  },
+  "newReport": {
+    "form": {
+      "title": "Submit New Report",
+      "description": "Help us track and monitor coral health by submitting your observations",
+      "locationDetails": {
+        "title": "Location Details",
+        "latitude": "Latitude*",
+        "longitude": "Longitude*",
+        "countryCode": "Country Code*",
+        "placeholder": "Click on map",
+        "searchLocation": "Search location..."
+      },
+      "reportDetails": {
+        "title": "Report Details",
+        "reportTitle": "Title",
+        "reportTitlePlaceholder": "Enter Report Title",
+        "dateOfDiscovery": "Date of Discovery*",
+        "photoUpload": {
+          "title": "Photo Upload",
+          "addPhotos": "Add Photos",
+          "selectedPhotos": "photo selected",
+          "multipleSelectedPhotos": "photos selected",
+          "resizeNote": "Images will be resized to 500X500"
+        },
+        "description": "Description",
+        "descriptionPlaceholder": "Please provide a detailed description of your discovery..."
+      },
+      "buttons": {
+        "clearForm": "Clear Form",
+        "submitForm": "Submit Form"
+      }
+    },
+    "guidelines": {
+      "title": "Reporting Guidelines",
+      "selectLocation": {
+        "title": "Select Location",
+        "description": "Click on the map to place a marker at the approximate location of your discovery"
+      },
+      "detailedDescription": {
+        "title": "Detailed Description",
+        "description": "Include observation about coral condition, water quality, and surrounding environment"
+      },
+      "recentDiscovery": {
+        "title": "Recent Discovery",
+        "description": "Report findings within 48 hours for most effective monitoring"
+      }
+    }
+  }
+}

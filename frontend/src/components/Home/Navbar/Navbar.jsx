@@ -5,7 +5,6 @@ import {
   UserGroupIcon,
   DatabaseIcon,
   PlusIcon,
-  BellIcon,
   UserIcon,
   LogoutIcon,
   AcademicCapIcon,
@@ -24,19 +23,24 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
+import LanguageDropdown from "../Language/LanguageDropdown";
 
-const navigationItems = [
-  {path: "/info", label: "SCTLD Info", icon: AcademicCapIcon},
-  {path: "/database", label: "Data Analytics", icon: DatabaseIcon},
-  {path: "/community", label: "Community", icon: UserGroupIcon},
-  {path: "/detection", label: "Disease Detection", icon: CameraIcon},
-];
 
 const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { token, setToken, user } = useContext(AppContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const {t} = useTranslation();
+
+  const navigationItems = [
+    {path: "/info", label: t('home.navbar.info'), icon: AcademicCapIcon},
+    {path: "/database", label: t('home.navbar.database'), icon: DatabaseIcon},
+    {path: "/community", label: t('home.navbar.community') , icon: UserGroupIcon},
+    {path: "/detection", label: t('home.navbar.detection'), icon: CameraIcon},
+  ];
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -64,7 +68,7 @@ const Navbar = ({ setShowLogin }) => {
           </NavLink>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className={`hidden md:flex items-center ${t('global.spacex')}`}>
             {navigationItems.map(({path, label, icon: Icon}) => (
               <NavLink
                 key={path}
@@ -74,13 +78,14 @@ const Navbar = ({ setShowLogin }) => {
                 `}
               >
                 <Icon className="w-4 h-4" />
-                <span>{label}</span>
+                <span className="whitespace-nowrap">{label}</span>
               </NavLink>
             ))}
           </div>
 
           {/* Right side Items */}
           <div className="flex items-center space-x-4">
+            <LanguageDropdown />
             {token ? (
               <>
                 {/* New Report Button */}
@@ -91,7 +96,7 @@ const Navbar = ({ setShowLogin }) => {
                     variant="default"  
                   >
                     <PlusIcon className="w-4 h-4" />
-                    <span>New Report</span>
+                    <span>{t('home.buttons.newReport')}</span>
                   </Button>
                 )}
 
@@ -135,17 +140,17 @@ const Navbar = ({ setShowLogin }) => {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate(`/profile/${user?.username}`)}>
                     <UserIcon className="w-4 h-4 mr-2" />
-                    Profile
+                    {t('home.buttons.profile')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>
                     <LogoutIcon className="w-4 h-4 mr-2" />
-                    Logout
+                    {t('home.buttons.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button onClick={() => setShowLogin(true)}>
-                Sign Up
+                {t('home.buttons.signUp')}
               </Button>
             )}
 

@@ -223,7 +223,7 @@ export const login = async (req, res) => {
       });
     }
 
-    if (!user.is_verified) {
+    if (user.is_verified === false) {
       return res.status(401).json({
         success: false,
         message: 'Email not verified'

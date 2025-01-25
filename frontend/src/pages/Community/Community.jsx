@@ -4,11 +4,13 @@ import Reports from "@/components/community/Reports";
 import { AppContext } from "@/context/AppContext";
 import { toast } from "react-toastify";
 import LatestNewsSidebar from "@/components/community/LatestNewsSidebar";
+import { useTranslation } from "react-i18next";
 
 const Community = () => {
   const { token, url, user } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(false);
   const [REPORTS, setREPORTS] = useState({});
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,7 +63,7 @@ const Community = () => {
             </div>
           )}
           {!isLoading && REPORTS?.length === 0 && (
-            <p className="text-center my-4">No Reports👻</p>
+            <p className="text-center my-4">{t('community.none')}</p>
           )}
           {!isLoading && REPORTS?.length > 0 && (
             <div className="flex">
@@ -81,7 +83,7 @@ const Community = () => {
         </>
       ) : (
         <div className="flex items-center justify-center h-screen">
-          <p className="text-center text-xl">Sign in/Sign Up to view this page</p>
+          <p className="text-center text-xl">{t('global.signToView')}</p>
         </div>
       )}
     </>
