@@ -25,6 +25,7 @@ const Community = () => {
         });
 
         const data = response.data.reports;
+        console.log(data);
         setREPORTS(data);
       } catch (e) {
         if (e.response && e.response.status === 401) {
@@ -66,7 +67,7 @@ const Community = () => {
             <p className="text-center my-4">{t('community.none')}</p>
           )}
           {!isLoading && REPORTS?.length > 0 && (
-            <div className="flex">
+            <div className="flex justify-between px-6">
               <div>
                 {REPORTS.map((report) => (
                   <Reports

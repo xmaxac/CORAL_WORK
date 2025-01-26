@@ -177,7 +177,7 @@ export const verifyEmail = async (req, res) => {
     });
 
   } catch (e) {
-    console.error('Verify Email error:', error);
+    console.error('Verify Email error:', e);
     return res.status(500).json({
       success: false,
       message: 'Server Error'
