@@ -5,6 +5,7 @@ import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
 import notificationRouter from "./routes/notificationRouter.js";
 import chatbotRouter from "./routes/chatbotRouter.js";
+import detectionRouter from "./routes/detectionRouter.js";
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -28,6 +29,7 @@ app.use("/api/auth", authRouter)
 app.use("/api/user", userRouter)
 app.use("/api/notification", notificationRouter)
 app.use("/api/chatbot", chatbotRouter)
+app.use("/api/detection", detectionRouter)
 
 
 app.get("/", (req, res) => {

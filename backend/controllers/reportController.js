@@ -16,6 +16,7 @@ const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) =
 };
 
 export const createReport = async (req, res) => {
+  console.log(req);
   const client = await pool.connect();
 
   try {
@@ -226,6 +227,7 @@ export const likeUnlikeReport = async (req, res) => {
 export const getAllReports = [
   cacheMiddleware('allReports', 600),
   async (req, res) => {
+    console.log(req);
     const client = await pool.connect();
     try {
       const reports = await client.query(`

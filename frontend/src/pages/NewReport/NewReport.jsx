@@ -11,6 +11,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AppContext } from '@/context/AppContext';
 import { useTranslation } from 'react-i18next';
+import { set } from 'date-fns';
 
 
 const libraries = ['places']
@@ -33,6 +34,7 @@ const NewReport = () => {
   const [status, setStatus] = useState({type: '', message: ''});
   const mapRef = useRef(null);
   const autoCompleteRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
   const {t} = useTranslation();
 
   useEffect(() => {
@@ -151,11 +153,7 @@ const NewReport = () => {
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    toast.info('Submitting your report...', {
-      position: 'top-center',
-      autoClose: 2000,
-      hideProgressBar: true,
-    });
+    setIsLoading(true);
 
     try {
       const formData = new FormData();
@@ -176,6 +174,7 @@ const NewReport = () => {
       }
     );
       if (response.data.success) {
+        setIsLoading(false);
         toast.success('Thank You! Your report has been successfully submitted.', {
           position: 'top-center',
           autoClose: 2000,
@@ -213,6 +212,11 @@ const NewReport = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
+      {isLoading && (
+        <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+          <div className="text-white">Loading...</div>
+        </div>
+      )}
       <div className='max-w-6xl mx-auto p-6'>
         <div className='grid grid-cols-3 gap-6'>
           {/*Main Form */}
