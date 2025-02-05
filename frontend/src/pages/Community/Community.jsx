@@ -25,7 +25,6 @@ const Community = () => {
         });
 
         const data = response.data.reports;
-        console.log(data);
         setREPORTS(data);
       } catch (e) {
         if (e.response && e.response.status === 401) {

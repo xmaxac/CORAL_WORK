@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 export const AppContext = createContext(null);
 
 const AppContextProvider = (props) => {
-  const url = "http://localhost:4000";
+  const url = "http://3.18.225.30:4000";
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);

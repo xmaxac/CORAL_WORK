@@ -10,7 +10,7 @@ import auth from "../middleware/auth.js";
 
 const reportRouter = express.Router();
 
-reportRouter.get('/all', auth, getAllReports)
+reportRouter.get('/all', getAllReports)
 reportRouter.get('/user/:username', auth, getUserReports)
 reportRouter.post('/create', auth, upload.fields([
   {name: 'images', maxCount:10}

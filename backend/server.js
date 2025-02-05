@@ -36,6 +36,6 @@ app.get("/", (req, res) => {
   res.send("Server is Online")
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server Started on http://localhost:${PORT}`)
 });

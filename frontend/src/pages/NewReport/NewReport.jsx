@@ -11,7 +11,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AppContext } from '@/context/AppContext';
 import { useTranslation } from 'react-i18next';
-import { set } from 'date-fns';
 
 
 const libraries = ['places']
@@ -35,6 +34,7 @@ const NewReport = () => {
   const mapRef = useRef(null);
   const autoCompleteRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const {url} = useContext(AppContext);
   const {t} = useTranslation();
 
   useEffect(() => {
@@ -166,7 +166,7 @@ const NewReport = () => {
         formData.append('images', image);
       });
 
-      const response = await axios.post("http://localhost:4000/api/report/create", formData, 
+      const response = await axios.post(`${url}/api/report/create`, formData, 
     {
         headers: {
           Authorization: `Bearer ${token}`,

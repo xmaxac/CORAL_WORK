@@ -1,12 +1,29 @@
-import React, {useRef, useState} from 'react'
-import { Upload, XCircle, Camera } from 'lucide-react'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { toast } from 'react-toastify'
+import React, { useRef, useState, useEffect, useContext } from "react";
+import {
+  Upload,
+  XCircle,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
+import { motion } from "framer-motion";
+import { AppContext } from "@/context/AppContext";
 
 const PhotoDetection = () => {
+  const [selectedOption, setSelectedOption] = useState("picture");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedVideo, setSelectedVideo] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [detectedFrames, setDetectedFrames] = useState([]);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [showResults, setShowResults] = useState(false);
+  const { url } = useContext(AppContext);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -21,20 +38,124 @@ const PhotoDetection = () => {
     }
   };
 
-  const handleClear = () => {
-    setSelectedImage(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
+  const handleVideoSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedVideo(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
     }
   };
 
-  const handleUpload = () => {
-    console.log('Uploading image for SCTLD Detection:', selectedImage);    
-  }
+  const handleClear = () => {
+    setSelectedImage(null);
+    setSelectedVideo(null);
+    setPreviewUrl(null);
+    setResults(null);
+    setShowResults(false);
+    setDetectedFrames([]);
+    setCurrentFrameIndex(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+  };
+
+  const handleImageUpload = async () => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+
+      const response = await axios.post(
+        `${url}/api/detection/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setIsLoading(false);
+      if (response.data) {
+        toast.success("Image uploaded successfully", {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+        setResults({
+          confidence: response.data.confidence,
+          predictedClass: response.data.predictedClass,
+        });
+        setShowResults(true);
+      }
+    } catch (e) {
+      console.error("Error uploading image for SCTLD Detection:", e);
+      toast.error("Error uploading image for SCTLD Detection", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    }
+  };
+
+  const handleVideoUpload = async () => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("video", selectedVideo);
+
+      const response = await axios.post(
+        `http://3.15.0.158:8080/predict_video`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setIsLoading(false);
+      if (response.data) {
+        toast.success("Video uploaded successfully", {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+
+        const processedFrame = response.data.frames.map((frame) => ({
+          base64Image: frame.base64Image,
+          confidence: frame.confidence,
+          predictedClass: frame.predictedClass,
+        }));
+
+        setDetectedFrames(processedFrame);
+        setShowResults(true);
+        setCurrentFrameIndex(0);
+        print(response.data);
+      }
+    } catch (e) {
+      console.error("Error uploading video for SCTLD Detection:", e);
+      toast.error("Error uploading video for SCTLD Detection", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    }
+  };
+
+  const handleNextFrame = () => {
+    setCurrentFrameIndex((prev) =>
+      prev < detectedFrames.length - 1 ? prev + 1 : prev
+    );
+  };
+
+  const handlePrevFrame = () => {
+    setCurrentFrameIndex((prev) => (prev > 0 ? prev - 1 : prev));
+  };
 
   const openCamera = () => {
     if (cameraInputRef.current) {
@@ -43,88 +164,155 @@ const PhotoDetection = () => {
   };
 
   const handleUserDevice = (e) => {
-    toast.error('Sorry, your device is not supported for this feature', {
-      position: 'top-center',
+    toast.error("Sorry, your device is not supported for this feature", {
+      position: "top-center",
       autoClose: 2000,
       hideProgressBar: true,
     });
   };
 
-
   return (
-    <div className='max-w-2xl mx-auto mt-5 space-x-2'>
-      <Card className='w-full'>
+    <div className="max-w-2xl mx-auto mt-5 flex flex-col space-x-4">
+      <div className="flex justify-center mb-5 space-x-4">
+        <button
+          className={`px-4 py-2 ${
+            selectedOption === "picture"
+              ? "bg-blue-500 text-white hover:bg-blue-700"
+              : "bg-gray-200 hover:bg-gray-400"
+          } rounded-lg`}
+          onClick={() => {
+            setSelectedOption("picture");
+            handleClear();
+          }}
+        >
+          Upload Picture
+        </button>
+        <button
+          className={`px-4 py-2 ${
+            selectedOption === "video"
+              ? "bg-blue-500 text-white hover:bg-blue-700"
+              : "bg-gray-200 hover:bg-gray-400"
+          } rounded-lg`}
+          onClick={() => {
+            setSelectedOption("video");
+            handleClear();
+          }}
+        >
+          Upload Video
+        </button>
+      </div>
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className='flex items-center space-x-2'>
+          <CardTitle className="flex items-center space-x-2">
             <Upload size={20} />
             <span>SCTLD Detection</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='flex flex-col items-center space-y-4'>
+          <div className="flex flex-col items-center space-y-4">
             <div
-              className={`w-full h-96 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-4 transition-colors ${!selectedImage ? 'border-slate-300 hover:border-slate-400 bg-slate-50' : 'border-transparent'}`}
+              className={`w-full h-96 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-4 transition-colors ${
+                !previewUrl
+                  ? "border-slate-300 hover:border-slate-400 bg-slate-50"
+                  : "border-transparent"
+              }`}
             >
-              {!selectedImage ? (
-                <div className='w-full h-full flex flex-col items-center justify-center space-y-4'>
-                  <label className='flex flex-col items-center justify-center cursor-pointer'>
-                    <Upload className='w-8 h-8 text-slate-400 mb-2' />
-                    <span className='text-sm text-slate-600 text-center'>
-                      Click or drag image here
+              {!previewUrl ? (
+                <div className="w-full h-full flex flex-col items-center justify-center space-y-4">
+                  <label className="flex flex-col items-center justify-center cursor-pointer">
+                    <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                    <span className="text-sm text-slate-600 text-center">
+                      {selectedOption === "picture"
+                        ? "Click or drag image here"
+                        : "Click or drag video here"}
                     </span>
-                    <input 
+                    <input
                       ref={fileInputRef}
-                      type='file'
-                      accept='image/*'
-                      className='hidden'
-                      onChange={handleImageSelect}
+                      type="file"
+                      accept={
+                        selectedOption === "picture" ? "image/*" : "video/*"
+                      }
+                      className="hidden"
+                      onChange={
+                        selectedOption === "picture"
+                          ? handleImageSelect
+                          : handleVideoSelect
+                      }
                     />
                   </label>
 
-                  <input 
+                  <input
                     ref={cameraInputRef}
-                    type='file'
-                    accept='image/*'
-                    capture='enviroment'
-                    className='hidden'
+                    type="file"
+                    accept="image/*"
+                    capture="enviroment"
+                    className="hidden"
                     onChange={handleImageSelect}
                   />
 
-                  <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2'>
-                    <span className='text-sm text-slate-400'>or</span>
-                    <Button
-                      variant='outline'
-                      onClick={isMobile ? openCamera : () => handleUserDevice()}
-                      className="flex items-center space-x-2"
-                    >
-                      <Camera size={16} />
-                      <span>Take Photo</span>
-                    </Button>
-                  </div>
+                  {selectedOption === "picture" ? (
+                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                      <span className="text-sm text-slate-400">or</span>
+                      <Button
+                        variant="outline"
+                        onClick={
+                          isMobile ? openCamera : () => handleUserDevice()
+                        }
+                        className="flex items-center space-x-2"
+                      >
+                        <Camera size={16} />
+                        <span>Take Photo</span>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                      <span className="text-sm text-slate-400">or</span>
+                      <Button
+                        variant="outline"
+                        onClick={
+                          isMobile ? openCamera : () => handleUserDevice()
+                        }
+                        className="flex items-center space-x-2"
+                      >
+                        <Camera size={16} />
+                        <span>Take Video</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className='relative w-full h-full'>
-                  <img 
-                    src={previewUrl}
-                    alt='Preview'
-                    className='w-full h-full object-contain rounded-lg'
-                  />
+                <div className="relative w-full h-full">
+                  {selectedOption === "picture" ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <video
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  )}
                 </div>
               )}
             </div>
 
-            {selectedImage && (
-              <div className='flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4'>
+            {previewUrl && (
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <Button
-                  variant='outline'
+                  variant="outline"
                   onClick={handleClear}
                   className="flex items-center justify-center space-x-2"
-                > 
+                >
                   <XCircle size={16} />
                   <span>Clear</span>
                 </Button>
                 <Button
-                  onClick={handleUpload}
+                  onClick={
+                    selectedOption === "picture" ? handleImageUpload : handleVideoUpload
+                  }
                   className="flex items-center justify-center space-x-2"
                 >
                   <Upload size={16} />
@@ -134,9 +322,81 @@ const PhotoDetection = () => {
             )}
           </div>
         </CardContent>
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center h-full">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <p className="text-gray-700">Processing Image, please wait...</p>
+            </div>
+          </div>
+        )}
       </Card>
-    </div>
-  )
-}
 
-export default PhotoDetection
+      {showResults && (
+        <Card className="w-full mt-5">
+          {selectedOption === "picture" && results ? (
+            <CardContent className="flex flex-col items-center">
+              <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
+                <div
+                  style={{ width: `${results.confidence * 100}%` }}
+                  className="h-4 rounded-full bg-blue-500"
+                />
+              </div>
+              <p className="mt-2 text-gray-600">
+                Confidence: {(results.confidence * 100).toFixed(2)}%
+              </p>
+              <h2 className="text-2xl font-bold mt-4">
+                {results.predictedClass}
+              </h2>
+            </CardContent>
+          ) : detectedFrames.length > 0 ? (
+            <CardContent className="flex flex-col items-center">
+              <div className="flex items-center space-x-4 w-full">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevFrame}
+                  disabled={currentFrameIndex === 0}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+
+                <div className="flex-1 flex flex-col items-center">
+                  <img
+                    src={`data:image/jpeg;base64,${detectedFrames[currentFrameIndex].base64Image}`}
+                    alt={`Frame ${currentFrameIndex + 1}`}
+                    className="max-h-[400px] object-contain"
+                  />
+
+                  <div className="mt-4 text-center">
+                    <p className="text-gray-600">
+                      Confidence:{" "}
+                      {(
+                        detectedFrames[currentFrameIndex].confidence * 100
+                      ).toFixed(2)}
+                      %
+                    </p>
+                    <h2 className="text-2xl font-bold">
+                      {detectedFrames[currentFrameIndex].predictedClass}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Frame {currentFrameIndex + 1} of {detectedFrames.length}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={handleNextFrame}
+                  disabled={currentFrameIndex === detectedFrames.length - 1}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            </CardContent>
+          ) : null}
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default PhotoDetection;

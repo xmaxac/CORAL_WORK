@@ -1,4 +1,8 @@
 import pkg from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const { Pool } = pkg;
 
 const pool = new Pool({
@@ -7,6 +11,9 @@ const pool = new Pool({
   host: process.env.PGHOST,
   port: process.env.PGPORT,
   database: process.env.PGDATABASE,
+  ssl: {
+    rejectUnauthorized: false, // For self-signed certificates
+  },
 });
 
 export default pool;
