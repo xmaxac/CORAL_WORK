@@ -1,7 +1,6 @@
 import pool from "../database/db.js"
-import bcrypt from "bcrypt"
-import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
-import redisClient from "../config/redis.js";
+import bcrypt from "bcryptjs"
+// import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
 import { uploadToS3, deleteFromS3 } from "../config/s3.js";
 
 const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) => {
@@ -25,9 +24,7 @@ const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) =
   }
 };
 
-export const getUserProfile = [
-  cacheMiddleware('userProfile', 1800),
-  async (req, res) => {
+export const getUserProfile = async (req, res) => {
     const client = await pool.connect();
     const { username } = req.params;
     try {
@@ -63,7 +60,6 @@ export const getUserProfile = [
       client.release();
     }
   }
-];
 
 export const followUnfollowUser = async (req, res) => {
   const client = await pool.connect();
@@ -213,7 +209,7 @@ export const updateUser = async (req, res) => {
 
     const updatedUserData = updatedUser.rows[0];
     const key = `userProfile:/api/user/profile/${updatedUserData.username}`;
-    await deleteCacheByPattern(key)
+    // await deleteCacheByPattern(key)
     console.log('Cache cleared');
 
     res.status(200).json({

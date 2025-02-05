@@ -5,11 +5,11 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // no larger than 5mb
+    fileSize: 50 * 1024 * 1024, // no larger than 5mb
   },
   fileFilter: function (req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      return cb(new Error('Only image files are allowed!'), false);
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|mp4|avi|mov)$/)) {
+      return cb(new Error('Only image and video files are allowed!'), false);
     }
     cb(null, true)
   }

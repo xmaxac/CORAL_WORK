@@ -1,18 +1,18 @@
 import pool from "../database/db.js"
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
-import redisClient from "../config/redis.js";
-import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
+// import redisClient from "../config/redis.js";
+// import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
 
 dotenv.config();
 
 const generateCode  = Math.floor(100000 + Math.random() * 900000).toString();
 
-const saveCode = (email, code) => {
-  redisClient.setEx(email, 300, code);
-};
+// const saveCode = (email, code) => {
+//   redisClient.setEx(email, 300, code);
+// };
 
 const sendVerificationEmail = (email, code) => {
   var transporter = nodemailer.createTransport({
@@ -100,7 +100,7 @@ export const register = async (req, res) => {
       const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
       const code = generateCode;
-      saveCode(req.body.email, code);
+      // saveCode(req.body.email, code);
 
       sendVerificationEmail(req.body.email, code);
 
@@ -155,7 +155,7 @@ export const verifyEmail = async (req, res) => {
     }
 
     const email = req.params.email;
-    const storedCode = await redisClient.get(email);
+    // const storedCode = await redisClient.get(email);
 
     if (code !== storedCode) {
       return res.status(400).json({
@@ -169,7 +169,7 @@ export const verifyEmail = async (req, res) => {
       [email]
     );
 
-    deleteCacheByPattern(email);
+    // deleteCacheByPattern(email);
 
     return res.status(200).json({
       success: true,
