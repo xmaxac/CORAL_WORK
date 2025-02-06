@@ -3,41 +3,52 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
-// import redisClient from "../config/redis.js";
-// import { cacheMiddleware, deleteCacheByPattern } from "../middleware/cache.js";
 
 dotenv.config();
 
-const generateCode  = Math.floor(100000 + Math.random() * 900000).toString();
-
-// const saveCode = (email, code) => {
-//   redisClient.setEx(email, 300, code);
-// };
+const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendVerificationEmail = (email, code) => {
-  var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
-    },
-  });
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
 
-  const mailOptions = {
-    from: 'Coral Base',
-    to: email,
-    subject: 'Coral Base Email Verification',
-    text: `Your verification code is ${code}`
-  };
+    const mailOptions = {
+      from: 'Coral Base',
+      to: email,
+      subject: 'Coral Base Email Verification',
+      text: `Your verification code is ${code}`
+    };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Email sending error:', error);
+        reject(error);
+      } else {
+        console.log('Email sent:', info.response);
+        resolve(info);
+      }
+    });
   });
-}
+};
+
+// const storeCode = async (userId, code) => {
+//   const client = await pool.connect();
+//   try {
+//     console.log(`Storing code: ${code} for userId: ${userId}`);
+//     const res = await client.query('INSERT INTO codes(user_id, code, created_at) VALUES($1::UUID, $2, NOW()) RETURNING code', [userId, code]);
+//     console.log('Code stored successfully:', res.rows[0].code);
+//     return res.rows[0].code;
+//   } catch (e) {
+//     console.error('Store Code error:', e);
+//     return null; // Return null instead of throwing 0
+//   }
+// }
 
 export const register = async (req, res) => {
   const client = await pool.connect();
@@ -53,8 +64,8 @@ export const register = async (req, res) => {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if(!emailRegex.test(req.body.email)) {
-      return res.status(400).json({success: false, message: "Invalid Email Format"});
+    if (!emailRegex.test(req.body.email)) {
+      return res.status(400).json({ success: false, message: "Invalid Email Format" });
     }
 
     if (req.body.email) {
@@ -71,64 +82,77 @@ export const register = async (req, res) => {
         });
       }
 
-    let userId;
-    if (req.body.username) {
-      const usernameCount = await client.query(
-        `SELECT COUNT(*) from users WHERE username = $1`,
-        [req.body.username]
-      );
+      if (req.body.username) {
+        const usernameCount = await client.query(
+          `SELECT COUNT(*) from users WHERE username = $1`,
+          [req.body.username]
+        );
 
-      if (parseInt(usernameCount.rows[0].count) > 0) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({
-          success: false,
-          message: 'Username already exists, please try again with a different username.'
-        });
+        if (parseInt(usernameCount.rows[0].count) > 0) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            message: 'Username already exists, please try again with a different username.'
+          });
+        }
       }
-    }
 
-    if (req.body.password) {
-      if (req.body.password.length < 6) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({
-          success: false,
-          message: 'Password must be at least 6 characters long'
-        });
-      }
-      
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(req.body.password, salt)
+      if (req.body.password) {
+        if (req.body.password.length < 6) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            message: 'Password must be at least 6 characters long'
+          });
+        }
 
-      const code = generateCode;
-      // saveCode(req.body.email, code);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
-      sendVerificationEmail(req.body.email, code);
-
-      const userResult = await client.query(
-        `INSERT INTO users (email, name, username, password)
-        VALUES ($1, $2, $3, $4)
+        const userResult = await client.query(
+          `INSERT INTO users (email, name, username, password, is_verified)
+        VALUES ($1, $2, $3, $4, false)
         RETURNING id, email, name, username`,
-        [req.body.email, req.body.name, req.body.username, hashedPassword]
-      );
-      userId = userResult.rows[0].id;
+          [req.body.email, req.body.name, req.body.username, hashedPassword]
+        );
 
-      const token = jwt.sign(
-        { id: userId, email: userResult.rows[0].email},
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
+        const userId = userResult.rows[0].id;
 
-      
 
-      await client.query('COMMIT');
-      return res.status(201).json({
-        success:true,
-        user: userResult.rows[0],
-        token: token
-      });
+        // 8. Generate and store verification code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        // console.log(code)
+        // console.log('Storing code for user:', userId, code); // Debug log
 
+        const codeResult = await client.query(
+          'INSERT INTO codes (user_id, code, created_at) VALUES ($1, $2, NOW()) RETURNING code',
+          [userId, code]
+        );
+        // console.log('Code stored:', codeResult.rows[0]); // Debug log
+
+        // 9. Send verification email
+        try {
+          await sendVerificationEmail(req.body.email, code);
+        } catch (emailError) {
+          console.error('Error sending verification email:', emailError);
+          // Continue with registration even if email fails
+        }
+
+        const token = jwt.sign(
+          { id: userId, email: userResult.rows[0].email },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+
+        await client.query('COMMIT');
+        return res.status(201).json({
+          success: true,
+          user: userResult.rows[0],
+          token: token
+        });
+
+      }
     }
-  }
   } catch (e) {
     await client.query('ROLLBACK');
     console.error('Registration error:', e);
@@ -143,24 +167,27 @@ export const register = async (req, res) => {
 
 export const verifyEmail = async (req, res) => {
   const client = await pool.connect();
+  const { code, email } = req.params;
 
   try {
-    const { code } = req.params;
-
-    if (!code) {
+    const userResult = await client.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields'
+        message: 'Invalid email'
       });
     }
+    const userId = userResult.rows[0].id;
 
-    const email = req.params.email;
-    // const storedCode = await redisClient.get(email);
+    const storedCodeResult = await client.query(
+      'SELECT code FROM codes WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
 
-    if (code !== storedCode) {
+    if (storedCodeResult.rows.length === 0 || storedCodeResult.rows[0].code !== code) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid code'
+        message: 'Invalid verification code'
       });
     }
 
@@ -168,8 +195,6 @@ export const verifyEmail = async (req, res) => {
       `UPDATE users SET is_verified = true WHERE email = $1`,
       [email]
     );
-
-    // deleteCacheByPattern(email);
 
     return res.status(200).json({
       success: true,
@@ -201,7 +226,7 @@ export const login = async (req, res) => {
     }
 
     const userResult = await client.query(
-      'SELECT id, email, username, password FROM users WHERE email = $1',
+      'SELECT id, email, username, password, is_verified FROM users WHERE email = $1',
       [email]
     );
 
@@ -231,14 +256,14 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: userResult.rows[0].email},
+      { id: user.id, email: userResult.rows[0].email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     return res.status(200).json({
       success: true,
-      user: {id: user.id, email: user.email, name: user.name, username: user.username},
+      user: { id: user.id, email: user.email, name: user.name, username: user.username },
       token: token
     });
   } catch (e) {
@@ -255,7 +280,7 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     // Handle token removal on the client side
-    res.json({success: true, message: 'Logged out successfully'});
+    res.json({ success: true, message: 'Logged out successfully' });
   } catch (e) {
     console.error('Logout error:', e);
     return res.status(500).json({
@@ -283,14 +308,14 @@ export const getme = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name, username: user.username, profile_image: user.profile_image, cover_image:user.cover_image, bio: user.bio, link: user.link }
+      user: { id: user.id, email: user.email, name: user.name, username: user.username, profile_image: user.profile_image, cover_image: user.cover_image, bio: user.bio, link: user.link }
     });
   } catch (e) {
     console.error('GetMe error:', e);
     return res.status(500).json({
       success: false,
       message: 'Server Error'
-    }); 
+    });
   } finally {
     client.release();
   }

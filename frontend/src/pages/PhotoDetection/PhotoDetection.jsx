@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
-import { motion } from "framer-motion";
 import { AppContext } from "@/context/AppContext";
 
 const PhotoDetection = () => {
@@ -22,6 +21,10 @@ const PhotoDetection = () => {
   const [results, setResults] = useState(null);
   const [detectedFrames, setDetectedFrames] = useState([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
   const [showResults, setShowResults] = useState(false);
   const { url } = useContext(AppContext);
   const fileInputRef = useRef(null);
@@ -46,6 +49,30 @@ const PhotoDetection = () => {
       setPreviewUrl(url);
     }
   };
+
+  const startRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoRef.current.srcObject = stream;
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      chunksRef.current.push(e.data);
+    };
+    mediaRecorderRef.current.onStop = () => {
+      const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      chunksRef.current = [];
+      setSelectedVideo(blob);
+    }
+    mediaRecorderRef.current.start();
+    setIsRecording(true);
+  }
+
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop();
+    videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+    setIsRecording(false);
+  }
 
   const handleClear = () => {
     setSelectedImage(null);
@@ -106,10 +133,10 @@ const PhotoDetection = () => {
     try {
       setIsLoading(true);
       const formData = new FormData();
-      formData.append("video", selectedVideo);
+      formData.append("file", selectedVideo);
 
       const response = await axios.post(
-        `http://3.15.0.158:8080/predict_video`,
+        `http://18.217.144.182:8080/predict_video`,
         formData,
         {
           headers: {
@@ -126,16 +153,14 @@ const PhotoDetection = () => {
           hideProgressBar: true,
         });
 
-        const processedFrame = response.data.frames.map((frame) => ({
-          base64Image: frame.base64Image,
+        const processedFrame = response.data.detected_frames.map((frame) => ({
+          base64Image: frame.frame,
           confidence: frame.confidence,
-          predictedClass: frame.predictedClass,
         }));
 
         setDetectedFrames(processedFrame);
         setShowResults(true);
         setCurrentFrameIndex(0);
-        print(response.data);
       }
     } catch (e) {
       console.error("Error uploading video for SCTLD Detection:", e);
@@ -270,7 +295,7 @@ const PhotoDetection = () => {
                       <Button
                         variant="outline"
                         onClick={
-                          isMobile ? openCamera : () => handleUserDevice()
+                          isMobile ? startRecording : () => handleUserDevice()
                         }
                         className="flex items-center space-x-2"
                       >
@@ -311,7 +336,9 @@ const PhotoDetection = () => {
                 </Button>
                 <Button
                   onClick={
-                    selectedOption === "picture" ? handleImageUpload : handleVideoUpload
+                    selectedOption === "picture"
+                      ? handleImageUpload
+                      : handleVideoUpload
                   }
                   className="flex items-center justify-center space-x-2"
                 >
@@ -323,7 +350,7 @@ const PhotoDetection = () => {
           </div>
         </CardContent>
         {isLoading && (
-          <div className="absolute inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center h-full">
+          <div className="absolute inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center h-screen ">
             <div className="bg-white p-6 rounded-lg shadow">
               <p className="text-gray-700">Processing Image, please wait...</p>
             </div>
@@ -359,7 +386,7 @@ const PhotoDetection = () => {
                   <ChevronLeft size={16} />
                 </Button>
 
-                <div className="flex-1 flex flex-col items-center">
+                <div className="flex-1 flex flex-col items-center pt-5 ">
                   <img
                     src={`data:image/jpeg;base64,${detectedFrames[currentFrameIndex].base64Image}`}
                     alt={`Frame ${currentFrameIndex + 1}`}
@@ -367,6 +394,12 @@ const PhotoDetection = () => {
                   />
 
                   <div className="mt-4 text-center">
+                    <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
+                      <div
+                        style={{ width: `${detectedFrames[currentFrameIndex].confidence * 100}%` }}
+                        className="h-4 rounded-full bg-blue-500"
+                      />
+                    </div>
                     <p className="text-gray-600">
                       Confidence:{" "}
                       {(
