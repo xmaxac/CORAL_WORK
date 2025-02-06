@@ -136,7 +136,7 @@ const PhotoDetection = () => {
       formData.append("file", selectedVideo);
 
       const response = await axios.post(
-        `http://18.217.144.182:8080/predict_video`,
+        `https://corabase-cv-ver2.onrender.com/predict_video`,
         formData,
         {
           headers: {
@@ -273,6 +273,15 @@ const PhotoDetection = () => {
                     capture="enviroment"
                     className="hidden"
                     onChange={handleImageSelect}
+                  />
+
+                  <input 
+                    ref={videoRef}
+                    type="file"
+                    accept="video/*"
+                    capture="enviroment"
+                    className="hidden"
+                    onChange={handleVideoSelect}
                   />
 
                   {selectedOption === "picture" ? (
