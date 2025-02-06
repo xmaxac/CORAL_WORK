@@ -1,4 +1,5 @@
 import React, {useState} from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
@@ -11,6 +12,7 @@ const Comment = ({isOpen, setIsOpen, initialComment, reportId, onCommentAdded, t
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState(initialComment)
   const [isCommenting, setIsCommenting] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e, newComment) => {
     e.preventDefault();
@@ -32,7 +34,7 @@ const Comment = ({isOpen, setIsOpen, initialComment, reportId, onCommentAdded, t
         setComment('');
         setComments([...comments, newComment]);
         onCommentAdded(response.data.comment)
-        window.location.reload()
+        navigate(0);
         toast.success('Comment added successfully', {
           position: 'top-center',
           autoClose: 2000,
