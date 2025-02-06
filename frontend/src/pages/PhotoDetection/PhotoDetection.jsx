@@ -5,6 +5,7 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
@@ -58,21 +59,21 @@ const PhotoDetection = () => {
       chunksRef.current.push(e.data);
     };
     mediaRecorderRef.current.onStop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+      const blob = new Blob(chunksRef.current, { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
       chunksRef.current = [];
       setSelectedVideo(blob);
-    }
+    };
     mediaRecorderRef.current.start();
     setIsRecording(true);
-  }
+  };
 
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
-    videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+    videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
-  }
+  };
 
   const handleClear = () => {
     setSelectedImage(null);
@@ -113,9 +114,14 @@ const PhotoDetection = () => {
           autoClose: 2000,
           hideProgressBar: true,
         });
+
+        let predictedClass = response.data.predictedClass;
+        if (predictedClass === "Healthy Coral") {
+          predictedClass = "SCTLD Not Detected";
+        }
         setResults({
           confidence: response.data.confidence,
-          predictedClass: response.data.predictedClass,
+          predictedClass: predictedClass,
         });
         setShowResults(true);
       }
@@ -198,6 +204,12 @@ const PhotoDetection = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-5 flex flex-col space-x-4">
+      {isLoading && (
+        <div className="z-[1000] flex flex-col items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span>Processing File...</span>
+        </div>
+      )}
       <div className="flex justify-center mb-5 space-x-4">
         <button
           className={`px-4 py-2 ${
@@ -275,7 +287,7 @@ const PhotoDetection = () => {
                     onChange={handleImageSelect}
                   />
 
-                  <input 
+                  <input
                     ref={videoRef}
                     type="file"
                     accept="video/*"
@@ -358,13 +370,6 @@ const PhotoDetection = () => {
             )}
           </div>
         </CardContent>
-        {isLoading && (
-          <div className="absolute inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center h-screen ">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <p className="text-gray-700">Processing Image, please wait...</p>
-            </div>
-          </div>
-        )}
       </Card>
 
       {showResults && (
@@ -405,7 +410,11 @@ const PhotoDetection = () => {
                   <div className="mt-4 text-center">
                     <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
                       <div
-                        style={{ width: `${detectedFrames[currentFrameIndex].confidence * 100}%` }}
+                        style={{
+                          width: `${
+                            detectedFrames[currentFrameIndex].confidence * 100
+                          }%`,
+                        }}
                         className="h-4 rounded-full bg-blue-500"
                       />
                     </div>
