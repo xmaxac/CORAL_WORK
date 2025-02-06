@@ -175,6 +175,7 @@ const PhotoDetection = () => {
         autoClose: 2000,
         hideProgressBar: true,
       });
+      setIsLoading(false);
     }
   };
 
@@ -203,11 +204,11 @@ const PhotoDetection = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-5 flex flex-col space-x-4">
+    <div className="relative max-w-2xl mx-auto mt-5 flex flex-col space-x-4">
       {isLoading && (
-        <div className="z-[1000] flex flex-col items-center justify-center h-screen">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span>Processing File...</span>
+        <div className="fixed top-[64px] inset-0 flex flex-col items-center justify-center w-full h-full z-50 bg-white">
+          <Loader2 className="h-8 w-8 animate-spin text-black" />
+          <span className="text-black">Processing File...</span>
         </div>
       )}
       <div className="flex justify-center mb-5 space-x-4">
