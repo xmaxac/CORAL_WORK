@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MapPin, Calendar, Globe, Send, FileText, ShieldAlert, Image as ImageIcon, X, Pencil } from 'lucide-react';
+import { MapPin, Calendar, Globe, Send, FileText, ShieldAlert, Image as ImageIcon, X, Pencil, Loader2 } from 'lucide-react';
 import {GoogleMap, LoadScript, Autocomplete, Marker} from '@react-google-maps/api'
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -213,8 +213,8 @@ const NewReport = () => {
   return (
     <div className='min-h-screen bg-gray-50'>
       {isLoading && (
-        <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
-          <div className="text-white">Loading...</div>
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin"/>
         </div>
       )}
       <div className='max-w-6xl mx-auto p-6'>

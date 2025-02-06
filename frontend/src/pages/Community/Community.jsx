@@ -5,6 +5,7 @@ import { AppContext } from "@/context/AppContext";
 import { toast } from "react-toastify";
 import LatestNewsSidebar from "@/components/community/LatestNewsSidebar";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 
 const Community = () => {
   const { token, url, user } = useContext(AppContext);
@@ -58,8 +59,8 @@ const Community = () => {
       {token ? (
         <>
           {isLoading && (
-            <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
-              <div className="text-white">Loading...</div>
+            <div className="flex items-center justify-center h-screen">
+              <Loader2 className="h-8 w-8 animate-spin"/>
             </div>
           )}
           {!isLoading && REPORTS?.length === 0 && (
