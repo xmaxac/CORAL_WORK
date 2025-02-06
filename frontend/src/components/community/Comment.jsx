@@ -51,7 +51,6 @@ const Comment = ({isOpen, setIsOpen, initialComment, reportId, onCommentAdded, t
     }
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-md">
