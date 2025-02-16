@@ -21,7 +21,7 @@ export const createReport = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    const { title, latitude, longitude, countryCode, description, reportDate } = req.body;
+    const { title, latitude, longitude, countryCode, description, reportDate, reefName, reefType, averageDepth, waterTemp } = req.body;
     const userId = req.user.id;
 
     const user = await client.query("SELECT * FROM users WHERE id = $1", [userId]);
@@ -35,10 +35,10 @@ export const createReport = async (req, res) => {
 
     const reportResult = await client.query(
       `INSERT INTO reports
-      (user_id, title, latitude, longitude, country_code, description, report_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      (user_id, title, latitude, longitude, country_code, description, report_date, reef_name, reef_type, average_depth, water_temp)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id`,
-      [userId, title, latitude, longitude, countryCode, description, reportDate]
+      [userId, title, latitude, longitude, countryCode, description, reportDate, reefName, reefType, averageDepth, waterTemp]
     );
 
     const reportId = reportResult.rows[0].id;
@@ -68,10 +68,6 @@ export const createReport = async (req, res) => {
 
     await client.query('COMMIT');
 
-    // await deleteCacheByPattern('topCountries:*');
-    // await deleteCacheByPattern('latestReports:*');
-    // await deleteCacheByPattern('allReports:*');
-    // console.log('Cache cleared - created report');
 
     res.json({
       success: true,
@@ -84,6 +80,10 @@ export const createReport = async (req, res) => {
         country_code: countryCode,
         description,
         report_date: reportDate,
+        reef_name: reefName,
+        reef_type: reefType,
+        average_depth: averageDepth,
+        water_temp: waterTemp,
         photos: completeReport.rows[0].photos.filter(url => url !== null) // Filter out null values
       }
     });
