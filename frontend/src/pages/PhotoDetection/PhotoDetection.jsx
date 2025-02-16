@@ -142,7 +142,7 @@ const PhotoDetection = () => {
       formData.append("file", selectedVideo);
 
       const response = await axios.post(
-        `https://corabase-cv-ver2.onrender.com/predict_video`,
+        `http://18.217.144.182:8080/predict_video`,
         formData,
         {
           headers: {
