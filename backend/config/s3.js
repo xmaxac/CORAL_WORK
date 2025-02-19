@@ -5,8 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  endpoint: `https://s3.us-east-2.amazonaws.com`,
+  region: 'us-east-2',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -25,7 +24,7 @@ export const uploadToS3 = async (fileBuffer, folder, fileName) => {
 
   try {
     await s3Client.send(new PutObjectCommand(uploadParams));
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.us-east-2.amazonaws.com/${key}`;
   } catch (e) {
     console.error('Error uploading to S3:', e);
     throw new Error('Failed to upload image');
