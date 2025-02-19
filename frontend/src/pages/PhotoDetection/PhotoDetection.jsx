@@ -140,9 +140,9 @@ const PhotoDetection = () => {
       setIsLoading(true);
       const formData = new FormData();
       formData.append("file", selectedVideo);
-
+      
       const response = await axios.post(
-        `http://18.216.127.127:8080/predict_video`,
+        `https://video-predict.coralbase.net/predict_video`,
         formData,
         {
           headers: {
