@@ -6,6 +6,7 @@ dotenv.config();
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
+  endpoint: `https://s3.us-east-2.amazonaws.com`,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
