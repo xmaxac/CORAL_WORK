@@ -15,7 +15,6 @@ const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) =
 };
 
 export const createReport = async (req, res) => {
-  console.log(req);
   const client = await pool.connect();
 
   try {
@@ -224,12 +223,11 @@ export const likeUnlikeReport = async (req, res) => {
 }
 
 export const getAllReports = async (req, res) => {
-  console.log(req);
   const client = await pool.connect();
   try {
     const reports = await client.query(`
         SELECT 
-          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at,
+          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp,
           u.username, u.profile_image, u.name,
           c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
           cu.username AS comment_username, cu.profile_image AS comment_profile_image, cu.name AS comment_name,
@@ -245,7 +243,7 @@ export const getAllReports = async (req, res) => {
           GROUP BY report_id
         ) likes_count ON r.id = likes_count.report_id
         LEFT JOIN report_photos rp ON r.id = rp.report_id
-        GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date,
+        GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at,
                 u.username, u.profile_image, u.name,
                 c.id, c.comment, c.user_id,
                 cu.username, cu.profile_image, cu.name, likes_count.likes
@@ -266,6 +264,10 @@ export const getAllReports = async (req, res) => {
           description: row.description,
           report_date: row.report_date,
           created_at: row.created_at,
+          reef_name: row.reef_name,  
+          reef_type: row.reef_type,
+          average_depth: row.average_depth, 
+          water_temp: row.water_temp,  
           photos: row.report_photo_urls || [],
           user: {
             username: row.username,

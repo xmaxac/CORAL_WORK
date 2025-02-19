@@ -6,8 +6,6 @@ import nodemailer from 'nodemailer';
 
 dotenv.config();
 
-const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
-
 const sendVerificationEmail = (email, code) => {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
@@ -18,11 +16,22 @@ const sendVerificationEmail = (email, code) => {
       },
     });
 
+    // var transporter = nodemailer.createTransport({
+    //   host: 'email-smtp.us-east-1.amazonaws.com',
+    //   port: 465,
+    //   secure: true,
+    //   auth: {
+    //     user: process.env.SMTP_USER,
+    //     pass: process.env.SMTP_PASSWORD
+    //   },
+    // });
+
     const mailOptions = {
-      from: 'Coral Base',
+      from: 'verification@coralbase.net',
       to: email,
       subject: 'Coral Base Email Verification',
-      text: `Your verification code is ${code}`
+      text: `Your verification code is ${code}`,
+      html: `<p>Your verification code is ${code}</p>`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -121,14 +130,11 @@ export const register = async (req, res) => {
 
         // 8. Generate and store verification code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        // console.log(code)
-        // console.log('Storing code for user:', userId, code); // Debug log
 
         const codeResult = await client.query(
           'INSERT INTO codes (user_id, code, created_at) VALUES ($1, $2, NOW()) RETURNING code',
           [userId, code]
         );
-        // console.log('Code stored:', codeResult.rows[0]); // Debug log
 
         // 9. Send verification email
         try {
@@ -254,6 +260,11 @@ export const login = async (req, res) => {
         message: 'Email not verified'
       });
     }
+
+    await client.query(
+      'DELETE FROM codes WHERE user_id = $1',
+      [user.id]
+    );
 
     const token = jwt.sign(
       { id: user.id, email: userResult.rows[0].email },
