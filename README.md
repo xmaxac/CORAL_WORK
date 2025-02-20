@@ -1,7 +1,7 @@
-# 🌊 CoralBase – Atony Coral Tissue Loss Disease Research  
+# 🌊 CoralBase iOS – A Stony Coral Tissue Loss Disease Research App
 
 ## 📌 Overview  
-**CoralBase** is an open-source web platform that helps researchers, conservationists, and marine biologists **track, analyze, and combat Stony Coral Tissue Loss Disease (SCTLD)**. Using **AI-powered image recognition, crowdsourced data, and interactive visualizations**, CoralBase enables better detection and understanding of coral diseases.  
+**CoralBase iOS** is an iOS adaptation of the open-source web platform that helps researchers, conservationists, and marine biologists **track, analyze, and combat Stony Coral Tissue Loss Disease (SCTLD)**. Using **AI-powered image recognition, crowdsourced data, and interactive visualizations**, CoralBase enables better detection and understanding of coral diseases.  
 
 This project was developed for the **TSA Software Development Competition**, addressing the prompt:  
 > *Develop a program that enhances the environment and/or agriculture to be more sustainable and efficient.*  
@@ -37,30 +37,8 @@ Coral reefs are one of the most important ecosystems on the planet, supporting *
 ## 🏗 Tech Stack  
 | **Component**      | **Technology** |
 |--------------------|---------------|
-| **Frontend**      | React, Tailwind CSS |
-| **Backend**       | Node.js, Express |
-| **Database**      | PostgreSQL (AWS RDS) |
-| **Caching**       | Redis (AWS ElastiCache) |
-| **Storage**       | AWS S3 (for image & document uploads) |
+| **Frontend**      | SwiftUI, Swift |
+| **Backend**       | Vapor, Fluent |
+| **Database**      | PostgreSQL |
 | **AI/ML**        | TensorFlow.js (for coral disease image recognition) |
-| **Deployment**    | Docker, AWS ECS, AWS S3 + Cloudfront |
 
-## 📂 Installation & Setup  
-To run CoralBase locally:  
-
-### **1️⃣ Clone the Repository**  
-```bash
-git clone https://github.com/xmaxc/TSA_SOFTWARE_DEVELOPMENT_CORAL.git
-```
-
-### **2️⃣ Set Up Environment Variables**
-Create a .env file in the root directory and add the necessary AWS, database, and API keys.
-
-### **3️⃣ Start Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-✅ Now visit: http://localhost:5173 🚀
