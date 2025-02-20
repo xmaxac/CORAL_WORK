@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  EyeIcon as Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
@@ -23,6 +24,7 @@ const PhotoDetection = () => {
   const [detectedFrames, setDetectedFrames] = useState([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
+  const [yoloResult, setYoloResult] = useState(null);
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -82,6 +84,7 @@ const PhotoDetection = () => {
     setResults(null);
     setShowResults(false);
     setDetectedFrames([]);
+    setYoloResult(null);
     setCurrentFrameIndex(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -97,32 +100,60 @@ const PhotoDetection = () => {
       const formData = new FormData();
       formData.append("file", selectedImage);
 
-      const response = await axios.post(
-        `${url}/api/detection/upload`,
-        formData,
-        {
+      const [normalResponse, yoloResponse] = await Promise.all([
+        axios.post(`${url}/api/detection/upload`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
-      );
+        }),
+        axios.post(
+          `https://yolo.coralbase.net/sctld-yolo-img-streaming`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            responseType: "blob",
+          }
+        ),
+      ]);
+
+      // const normalResponse = await axios.post(
+      //   `${url}/api/detection/upload`,
+      //   formData,
+      //   {
+      //     headers: {
+      //       "Content-Type": "multipart/form-data",
+      //     },
+      //   }
+      // );
 
       setIsLoading(false);
-      if (response.data) {
+
+      if (normalResponse.data) {
         toast.success("Image uploaded successfully", {
           position: "top-center",
           autoClose: 2000,
           hideProgressBar: true,
         });
 
-        let predictedClass = response.data.predictedClass;
+        let predictedClass = normalResponse.data.predictedClass;
         if (predictedClass === "Healthy Coral") {
           predictedClass = "SCTLD Not Detected";
         }
         setResults({
-          confidence: response.data.confidence,
+          confidence: normalResponse.data.confidence,
           predictedClass: predictedClass,
         });
+
+        const blob = new Blob([yoloResponse.data], { type: "image/jpeg" });
+        // console.log("Blob Size:", blob.size);
+
+        if (blob.size > 0) {
+          const yoloImageUrl = URL.createObjectURL(blob);
+          setYoloResult(yoloImageUrl); // Save to state
+        }
+
         setShowResults(true);
       }
     } catch (e) {
@@ -140,31 +171,35 @@ const PhotoDetection = () => {
       setIsLoading(true);
       const formData = new FormData();
       formData.append("file", selectedVideo);
-      
-      const response = await axios.post(
-        `https://video-predict.coralbase.net/predict_video`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+
+      const normalResponse = await axios.post(
+          `https://video-predict.coralbase.net/predict_video`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
       setIsLoading(false);
-      if (response.data) {
+
+      if (normalResponse.data) {
         toast.success("Video uploaded successfully", {
           position: "top-center",
           autoClose: 2000,
           hideProgressBar: true,
         });
 
-        const processedFrame = response.data.detected_frames.map((frame) => ({
-          base64Image: frame.frame,
-          confidence: frame.confidence,
-        }));
+        const processedFrame = normalResponse.data.detected_frames.map(
+          (frame) => ({
+            base64Image: frame.frame,
+            confidence: frame.confidence,
+          })
+        );
 
         setDetectedFrames(processedFrame);
+
         setShowResults(true);
         setCurrentFrameIndex(0);
       }
@@ -176,6 +211,57 @@ const PhotoDetection = () => {
         hideProgressBar: true,
       });
       setIsLoading(false);
+    }
+  };
+
+  const handleYoloUpload = async () => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("file", selectedVideo);
+
+      const yoloResponse = await axios.post(`https://yolo.coralbase.net/sctld-yolo-video`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 120000,
+        })
+
+      setIsLoading(false);
+
+      if (yoloResponse.data) {
+        toast.success("Video uploaded successfully", {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+        console.log("Yolo:", yoloResponse.data);
+
+        const yoloVideoUrl = yoloResponse.data;
+        setYoloResult(yoloVideoUrl);
+
+        setShowResults(true);
+        setCurrentFrameIndex(0);
+      }
+    } catch (e) {
+      console.error("Error uploading video for SCTLD Detection:", e);
+      toast.error("Error uploading video for SCTLD Detection", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewYolo = () => {
+    if (selectedOption === "video") {
+      const link = document.createElement("a");
+      link.href = yoloResult;
+      link.download = "detected-video.mp4";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -238,6 +324,19 @@ const PhotoDetection = () => {
         >
           Upload Video
         </button>
+        <button
+          className={`px-4 py-2 ${
+            selectedOption === "yolo"
+              ? "bg-blue-500 text-white hover:bg-blue-700"
+              : "bg-gray-200 hover:bg-gray-400"
+          } rounded-lg`}
+          onClick={() => {
+            setSelectedOption("yolo");
+            handleClear();
+          }}
+        >
+          Click to view yolo
+        </button>
       </div>
       <Card className="w-full">
         <CardHeader>
@@ -297,35 +396,33 @@ const PhotoDetection = () => {
                     onChange={handleVideoSelect}
                   />
 
-                  {selectedOption === "picture" ? (
+                  {selectedOption === "picture" ||
+                  selectedOption === "video" ||
+                  selectedOption === "yolo" ? (
                     <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
                       <span className="text-sm text-slate-400">or</span>
                       <Button
                         variant="outline"
                         onClick={
-                          isMobile ? openCamera : () => handleUserDevice()
+                          isMobile
+                            ? selectedOption === "picture"
+                              ? openCamera
+                              : startRecording
+                            : () => handleUserDevice()
                         }
                         className="flex items-center space-x-2"
                       >
                         <Camera size={16} />
-                        <span>Take Photo</span>
+                        <span>
+                          {selectedOption === "picture"
+                            ? "Take Photo"
+                            : selectedOption === "video"
+                            ? "Take Video"
+                            : "Upload Video for yolo"}
+                        </span>
                       </Button>
                     </div>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                      <span className="text-sm text-slate-400">or</span>
-                      <Button
-                        variant="outline"
-                        onClick={
-                          isMobile ? startRecording : () => handleUserDevice()
-                        }
-                        className="flex items-center space-x-2"
-                      >
-                        <Camera size={16} />
-                        <span>Take Video</span>
-                      </Button>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               ) : (
                 <div className="relative w-full h-full">
@@ -335,13 +432,14 @@ const PhotoDetection = () => {
                       alt="Preview"
                       className="w-full h-full object-contain rounded-lg"
                     />
-                  ) : (
+                  ) : selectedOption === "video" ||
+                    selectedOption === "yolo" ? (
                     <video
                       src={previewUrl}
                       alt="Preview"
                       className="w-full h-full object-contain rounded-lg"
                     />
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -360,7 +458,9 @@ const PhotoDetection = () => {
                   onClick={
                     selectedOption === "picture"
                       ? handleImageUpload
-                      : handleVideoUpload
+                      : selectedOption === "video"
+                      ? handleVideoUpload
+                      : handleYoloUpload
                   }
                   className="flex items-center justify-center space-x-2"
                 >
@@ -389,8 +489,20 @@ const PhotoDetection = () => {
               <h2 className="text-2xl font-bold mt-4">
                 {results.predictedClass}
               </h2>
+              {yoloResult && selectedOption == "picture" && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold mb-2">
+                    YOLO Detection Result:
+                  </h3>
+                  <img
+                    src={yoloResult}
+                    alt="YOLO detection"
+                    className="max-w-full h-auto rounded-lg"
+                  />
+                </div>
+              )}
             </CardContent>
-          ) : detectedFrames.length > 0 ? (
+          ) : selectedOption === 'video' && detectedFrames.length >= 0 ? (
             <CardContent className="flex flex-col items-center">
               <div className="flex items-center space-x-4 w-full">
                 <Button
@@ -445,6 +557,18 @@ const PhotoDetection = () => {
               </div>
             </CardContent>
           ) : null}
+          {yoloResult & selectedOption == "yolo" && (
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="outline"
+                onClick={handleViewYolo}
+                className="flex items-center justify-center space-x-2"
+              >
+                <Eye size={16} />
+                <span>Download YOLO Video</span>
+              </Button>
+            </div>
+          )}
         </Card>
       )}
     </div>
