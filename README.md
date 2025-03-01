@@ -59,5 +59,5 @@ cd frontend
 npm install
 npm run dev
 ```
-Now visit: http://localhost:5173
-To access online: https://coralbase.net
+Now visit: http://localhost:5173 OR
+To access online: https://coralbase.net (make an account first to access all features)!
