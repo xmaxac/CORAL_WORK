@@ -6,7 +6,7 @@
 This project was developed for the **TSA Software Development Competition**, addressing the prompt:  
 > *Develop a program that enhances the environment and/or agriculture to be more sustainable and efficient.*  
 
-## 🎯 Problem Statement  
+## Problem Statement  
 Coral reefs are one of the most important ecosystems on the planet, supporting **25% of marine life**, protecting coastal areas, and contributing to global biodiversity. However, SCTLD has been devastating reefs, spreading across the Caribbean and beyond. **Despite its severity, tracking SCTLD remains a major challenge due to limited data-sharing platforms and real-time analysis tools.**  
 
 ### 🔥 **CoralBase solves this by:**  
