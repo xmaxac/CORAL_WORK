@@ -62,5 +62,4 @@ cd frontend
 npm install
 npm run dev
 ```
-
-✅ Now visit: http://localhost:5173 🚀
+Now visit: http://localhost:5173 🚀
