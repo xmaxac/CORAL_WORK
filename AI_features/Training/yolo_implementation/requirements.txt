@@ -1,9 +1,0 @@
-uvicorn
-fastapi
-opencv-python 
-numpy
-tensorflow
-boto3 
-Pillow
-python-multipart
-torch
