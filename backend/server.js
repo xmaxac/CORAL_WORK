@@ -27,7 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/report", reportRouter)
 app.use("/api/auth", authRouter)
 app.use("/api/user", userRouter)
-app.use("/api/notification", notificationRouter)
 app.use("/api/chatbot", chatbotRouter)
 app.use("/api/detection", detectionRouter)
 

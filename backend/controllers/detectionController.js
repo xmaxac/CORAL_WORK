@@ -8,8 +8,7 @@ import pkg from 'form-data';
 // import { v4 as uuidv4 } from 'uuid';
 
 const CLASSES = ["Healthy Coral", "SCTLD Coral"]
-// const endpoint = "http://3.23.104.34:8605/v1/models/1:predict"
-const endpoint = "http://18.117.114.163:8605/v1/models/1:predict"
+const endpoint = "http://3.143.218.248:8605/v1/models/1:predict"
 
 export const uploadDetection = async (req, res) => {
   const fileBuffer = req.file.buffer;

@@ -64,7 +64,7 @@ const Navbar = ({ setShowLogin }) => {
             to="/"
             className="text-2xl font-bold text-blue-500 hover:text-blue-600 transition-colors"
           >
-            Coral Base
+            CoralBase
           </NavLink>
           
           {/* Desktop Navigation */}
