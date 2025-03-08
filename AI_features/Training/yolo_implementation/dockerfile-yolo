@@ -1,0 +1,30 @@
+FROM python:3.12.7-slim
+
+WORKDIR /app
+
+# Install system dependencies first (cached separately)
+RUN apt-get update && \
+    apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender1 && \
+    rm -rf /var/lib/apt/lists/*  # Clean up to reduce image size
+
+# Copy requirements.txt separately for caching
+COPY requirements.txt requirements.txt
+
+# Upgrade pip and install dependencies without cache
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir torch && \
+    pip install --no-cache-dir ultralytics --no-deps && \
+    pip install --no-cache-dir matplotlib>=3.3.0 pandas>=1.1.4 psutil py-cpuinfo \
+    pyyaml>=5.3.1 scipy>=1.4.1 seaborn>=0.11.0 torchvision>=0.9.0 tqdm>=4.64.0 ultralytics-thop>=2.0.0
+
+
+COPY ./main.py /app/main.py
+COPY ./yolov8-training/coral-detector/weights/best.pt /app/yolov8-training/coral-detector/weights/best.pt
+COPY ./1.keras /app/1.keras
+
+# Expose port for API
+EXPOSE 8090
+
+# Run the FastAPI app with Uvicorn
+CMD ["sh", "-c", "uvicorn main:app --reload --host 0.0.0.0 --port 8090"]
