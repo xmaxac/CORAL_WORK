@@ -1,3 +1,6 @@
+# DERECATED FILE! THIS WAS BEFORE I ADDED BATCH PROCESSING and debugged everything
+
+
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -158,15 +161,15 @@ async def sctldDetection_video(
 
     # Call the function to process the video and upload to S3
     url = yp.draw_videoprediction_sctldcnnxyolo_download(
-        model_yolo=CDYOLO_MODEL,  # Replace with your actual YOLO model
-        model_sctldcnn=SCTLDCNN_MODEL,  # Replace with your actual SCTLD CNN model
+        model_yolo=CDYOLO_MODEL,  
+        model_sctldcnn=SCTLDCNN_MODEL,  
         video_path=temp_file_path,
         s3_ID=os.getenv("ID"),
         s3_key=os.getenv("KEY"),
         s3_REGION=os.getenv("REGION"),
-        frame_skip=frame_skip,  # Pass frame_skip as a parameter to the function
-        conf_threshold_yolo=conf_threshold_yolo,  # Pass conf_threshold_yolo to the function
-        conf_threshold_scltdcnn=conf_threshold_sctldcnn  # Pass conf_threshold_sctldcnn to the function
+        frame_skip=frame_skip,  
+        conf_threshold_yolo=conf_threshold_yolo,  
+        conf_threshold_scltdcnn=conf_threshold_sctldcnn  
     )
 
     return {"url": url}
