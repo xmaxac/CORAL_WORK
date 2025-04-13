@@ -1,6 +1,0 @@
-opencv-python
-numpy
-fastapi
-uvicorn
-tensorflow
-python-multipart
