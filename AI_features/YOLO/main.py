@@ -173,15 +173,3 @@ async def sctldDetection_video(
 
 
 
-
-
-
-# # Add the path to the 'modules' folder
-# example_image_path = "../data/CNN/unformatted/healthy_coral/7818550.jpg"
-# image = cv2.imread(example_image_path)
-# image_converted = img.preprocess_image(image_array=image)
-# cv2.imshow("fuck this", image_converted)
-# cv2.waitKey(0)  
-#  # Close all OpenCV windows
-# cv2.destroyAllWindows()
-
