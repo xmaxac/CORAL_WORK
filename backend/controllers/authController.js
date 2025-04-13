@@ -131,7 +131,7 @@ export const register = async (req, res) => {
         // 8. Generate and store verification code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-        const codeResult = await client.query(
+        await client.query(
           'INSERT INTO codes (user_id, code, created_at) VALUES ($1, $2, NOW()) RETURNING code',
           [userId, code]
         );
@@ -278,7 +278,7 @@ export const login = async (req, res) => {
       token: token
     });
   } catch (e) {
-    console.error('Login error:', error);
+    console.error('Login error:', e);
     return res.status(500).json({
       success: false,
       message: 'Server Error'

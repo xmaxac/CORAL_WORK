@@ -1,3 +1,15 @@
+/**
+ * Profile Page Component
+ * 
+ * This component displays a user's profile where they can:
+ * - View their own profile information
+ * - Edit their profile information
+ * - Change their profile picture and cover image
+ * 
+ * The page requires user authentication to access content.
+ * If a user is not logged in, they will see a message prompting them to sign in.
+ */
+
 import React, { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppContext } from "@/context/AppContext";
@@ -32,6 +44,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
+// Dialog component for confirming changes to profile information
 const ConfirmDialog = ({ title, message, onConfirm, children }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
@@ -48,6 +61,7 @@ const ConfirmDialog = ({ title, message, onConfirm, children }) => (
   </AlertDialog>
 );
 
+// Dialog component for editing profile information
 const EditProfileDialog = ({ onSave }) => {
   const { profile } = useContext(AppContext);
   const [formData, setFormData] = useState({
@@ -59,11 +73,13 @@ const EditProfileDialog = ({ onSave }) => {
     currentPassword: "",
     newPassword: "",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
+    // Update form data when profile changes
     setFormData(prev => ({
       ...prev,
       name: profile?.name ?? "",
@@ -77,6 +93,7 @@ const EditProfileDialog = ({ onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate form data
     if (formData.currentPassword || formData.newPassword) {
       if (!formData.newPassword) {
         return toast.error("Please enter a new password", {
@@ -116,6 +133,7 @@ const EditProfileDialog = ({ onSave }) => {
     await submitForm();
   };
 
+  // Function to submit form data to the server
   const submitForm = async () => {
     setIsSubmitting(true);
     try {
@@ -259,6 +277,7 @@ const EditProfileDialog = ({ onSave }) => {
 };
 
 const Profile = () => {
+  // Get required data from AppContext
   const [formData, setFormData] = useState(new FormData());
   const { profile, url, user, setProfile, fetchProfileByUsername, token } = useContext(AppContext);
   const { username } = useParams();
@@ -275,6 +294,7 @@ const Profile = () => {
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
+  // Function to fetch user profile data from the server
   const fetchProfile = useCallback(async () => {
     if (!token) {
       setIsOwner(false);
@@ -300,6 +320,7 @@ const Profile = () => {
     }
   }, [username, token, fetchProfileByUsername, setProfile]);
 
+  // Check if the current user is the owner of the profile
   useEffect(() => {
     if (user && profile) {
       setIsOwner(user.username === profile.username)
@@ -312,6 +333,7 @@ const Profile = () => {
     fetchProfile()
   }, [fetchProfile])
 
+  // Function to handle image uploads for profile picture and cover image
   const handleImageChange = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -347,6 +369,7 @@ const Profile = () => {
     }
   };
 
+  // Function to update profile information on the server
   const handleProfileUpdate = async (updateData) => {
 
     try {
