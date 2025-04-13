@@ -24,7 +24,7 @@ SCTLDCNN_MODEL = tf.keras.models.load_model("../models/CNN_models/1_ver/1.keras"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", 
+    allow_origins=["*"
     " https://coralbase.net", 
     "https://www.coralbase.net", 
     "https://*.coralbase.net", 
