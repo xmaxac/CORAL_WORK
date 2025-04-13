@@ -1,0 +1,12 @@
+names:
+- Coral
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: coral-detector
+  url: https://universe.roboflow.com/coralbase/coral-detector/dataset/4
+  version: 4
+  workspace: coralbase
+test: ../test/images
+train: ../train/images
+val: ../valid/images

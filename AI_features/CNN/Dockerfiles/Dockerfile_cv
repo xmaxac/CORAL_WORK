@@ -1,0 +1,10 @@
+FROM python:3.12.4-slim
+RUN apt-get update
+RUN  apt-get install -y libgl1-mesa-glx
+RUN apt-get install -y libglib2.0-0 libsm6 libxext6 libxrender1
+WORKDIR /app
+COPY models/new_models/1.keras /app/models/new_models/1.keras
+COPY API/cv.py /app/API/cv.py
+COPY API/requirements.txt /app/API/requirements.txt
+RUN pip install -r /app/API/requirements.txt
+CMD ["sh", "-c", "cd API && uvicorn cv:app --reload --host 0.0.0.0 --port 8080"]
