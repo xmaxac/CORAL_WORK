@@ -1,5 +1,11 @@
 import pool from "../database/db.js";
 import { uploadToS3, deleteFromS3 } from "../config/s3.js";
+import OpenAI from "openai";
+import nodemailer from "nodemailer";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
 const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) => {
   if (!fileBuffer) return existingImageUrl;
@@ -93,6 +99,147 @@ export const createReport = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to create report' })
   } finally {
     client.release()
+  }
+}
+
+const sendReviewEmail = async (content) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
+    }
+  });
+
+  const approveUrl = `http://localhost:4000`;
+  const denyUrl = `http://localhost:4000`;
+
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: process.env.EMAIL,
+    subject: "Pending Report Review",
+    html: `
+      <p><strong>Pending report needs review:</strong></p>
+      <p>${content}</p>
+      <p>
+        <a href="${approveUrl}">✅ Approve</a> |
+        <a href="${denyUrl}">❌ Deny</a>
+      </p>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
+const isPending = (results) => {
+  for (const field in results) {
+    const scores = results[field]?.category_scores;
+    if (!scores) continue;
+
+    const hasSuspiciousScore = Object.values(scores).some(score => score >= 0.1 && score < 0.7);
+    if (hasSuspiciousScore) return true;
+  }
+  return false;
+}
+
+export const moderateReport = async (req, res) => {
+  const client = await pool.connect();
+  const { title, description, reefName, reefType} = req.body;
+
+  const fieldsToModerate = {
+    title,
+    description,
+    reefName,
+    reefType
+  }
+
+  await client.query('BEGIN');
+
+  try {
+
+    const contentSections = [];
+    const flaggedSections = [];
+    const moderationResults = {};
+
+    for (const [field, content] of Object.entries(fieldsToModerate)) {
+      const moderation = await openai.moderations.create({ input:content });
+      const result = moderation.results[0];
+      moderationResults[field] = result;
+
+      contentSections.push({ field, content });
+
+      if (result.flagged) {
+        flaggedSections.push({
+          field,
+          content,
+          categories: result.categories,
+        });
+      }
+    }
+  
+    const marineCheckPrompt = `
+      You are an assistant that classifies content as either marine-related or not marine-related. The content is about topics like coral reefs, marine life, ocean, marine diseases like Stony Coral Tissue Loss Disease (SCTLD), or general marine biology. 
+      Please read the following description and classify it as either marine-related or not marine-related:
+  
+      Description: "${description}"
+      If the content is related to marine topics, say "Marine-related". If it is not, say "Not marine-related".
+    `;
+    
+    const marineCheck = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {role: "system", content: "You are an assistant that classifies content as marine-related or not marine-related."},
+        {role: "user", content: marineCheckPrompt}
+      ]
+    });
+  
+    const marineJudgment = marineCheck.choices[0].message.content.trim().toLowerCase();
+    const isMarineRelated = marineJudgment === "marine-related"
+
+    const moderationStatus = flaggedSections.length > 0 || isMarineRelated == "not marine-related" ? "flagged" : isPending(moderationResults) ? "pending" : "approved";
+    
+    await client.query(
+      `INSERT INTO moderation_logs (user_id, content, is_flagged, is_marine_related, categories, status)
+      VALUES ($1, $2, $3, $4, $5, $6)`,
+      [req.user.id, JSON.stringify(contentSections), flaggedSections.length > 0, isMarineRelated, JSON.stringify(moderationResults.description?.categories ?? {}), moderationStatus]
+    )
+  
+    await client.query('COMMIT');
+
+    if (moderationStatus === "pending") {
+      const formattedContent = contentSections.map(
+        ({ field, content }) => `<strong>${field}:</strong> ${content}`
+      ).join("<br>");
+      
+      await sendReviewEmail(formattedContent);
+      return res.status(200).json({
+        allowed: false,
+        flagged: true,
+        reason: 'Pending moderation',
+        flaggedSections,
+        isMarineRelated
+      })
+    }
+
+    if (flaggedSections.length > 0 || !isMarineRelated) {
+      return res.status(200).json({
+        allowed: false, 
+        flagged: true,
+        reason: 'Flagged for inappropriate content or not marine-related content',
+        flaggedSections,
+        isMarineRelated
+      });
+    }
+  
+    res.status(200).json({
+      allowed: true,
+      flagged: false,
+      message: "Report is approved",
+      isMarineRelated
+    });
+  } catch (e) {
+    console.error("Failed to moderate report", e);
+    res.status(500).json({ success: false, message: "Failed to moderate report" });
   }
 }
 

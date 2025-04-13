@@ -1,3 +1,13 @@
+/**
+ * NewReport Page Component
+ * 
+ * This component allows users to submit a new stony coral tissue loss disease report.
+ * Users can provide details about the location, reef, and report, and upload photos.
+ * The form includes guidelines for submitting a report.
+ * 
+ * The page requires user authentication to access content.
+ */
+
 import React, { useState, useRef, useContext, useEffect } from "react";
 import {
   Card,
@@ -39,7 +49,11 @@ import { useTranslation } from "react-i18next";
 const libraries = ["places"];
 
 const NewReport = () => {
+
+  // Access application-wide data like authentication token
   const { token } = useContext(AppContext);
+
+  // State to store form data
   const [data, setData] = useState({
     title: "",
     latitude: "",
@@ -53,18 +67,27 @@ const NewReport = () => {
     waterTemp: "",
   });
 
+  // State to store selected images and image previews
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const fileInputRef = useRef(null);
+
+  // State to store map position and status message
   const [position, setPosition] = useState({});
   const [status, setStatus] = useState({ type: "", message: "" });
   const mapRef = useRef(null);
   const autoCompleteRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Access application-wide data like API URL
   const { url } = useContext(AppContext);
+
+  // Hook for handling multi-language text translation
   const { t } = useTranslation();
 
+
   useEffect(() => {
+    // Get current location of the user in order to center map if available
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -85,6 +108,7 @@ const NewReport = () => {
   }, []);
 
   const handleMapClick = (event) => {
+    // Get the latitude and longitude of the clicked location on the map
     const newPosition = {
       lat: event.latLng.lat(),
       lng: event.latLng.lng(),
@@ -99,6 +123,7 @@ const NewReport = () => {
   };
 
   const handleImageUpload = (e) => {
+    // Handle image upload and preview
     const files = Array.from(e.target.files);
     const newImages = [];
     const newPreviews = [];
@@ -137,16 +162,19 @@ const NewReport = () => {
   };
 
   const removeImage = (index) => {
+    // Remove image from selected images and previews
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleChange = (event) => {
+    // Handle form input changes
     const { name, value } = event.target;
     setData((data) => ({ ...data, [name]: value }));
   };
 
   const handlePositionChange = () => {
+    // Handle changes in the selected location on the map
     const place = autoCompleteRef.current.getPlace();
     if (place.geometry) {
       const newPosition = {
@@ -164,6 +192,7 @@ const NewReport = () => {
   };
 
   const fetchCountryCode = async (lat, lng) => {
+    // Fetch the country code based on the latitude and longitude
     try {
       const response = await axios.get(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
@@ -180,6 +209,7 @@ const NewReport = () => {
   };
 
   const onSubmit = async (event) => {
+    // Handle form submission
     event.preventDefault();
     setIsLoading(true);
 
@@ -194,43 +224,63 @@ const NewReport = () => {
         formData.append("images", image);
       });
 
-      const response = await axios.post(`${url}/api/report/create`, formData, {
+      const moderateResponse = await axios.post(`${url}/api/report/moderate`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (response.data.success) {
-        setIsLoading(false);
-        toast.success(
-          "Thank You! Your report has been successfully submitted.",
-          {
-            position: "top-center",
-            autoClose: 2000,
-            hideProgressBar: true,
-          }
-        );
-        setData({
-          title: "",
-          latitude: "",
-          longitude: "",
-          countryCode: "",
-          description: "",
-          reportDate: "",
-          reefName: "",
-          reefType: "",
-          averageDepth: "",
-          waterTemp: "",
+
+      if (moderateResponse.data.allowed) {
+        const response = await axios.post(`${url}/api/report/create`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        setPosition(null);
-        setSelectedImages([]);
-        setImagePreviews([]);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
+        if (response.data.success) {
+          setIsLoading(false);
+          toast.success(
+            "Thank You! Your report has been successfully submitted.",
+            {
+              position: "top-center",
+              autoClose: 2000,
+              hideProgressBar: true,
+            }
+          );
+          setData({
+            title: "",
+            latitude: "",
+            longitude: "",
+            countryCode: "",
+            description: "",
+            reportDate: "",
+            reefName: "",
+            reefType: "",
+            averageDepth: "",
+            waterTemp: "",
+          });
+          setPosition(null);
+          setSelectedImages([]);
+          setImagePreviews([]);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          throw new Error("Failed to submit report");
         }
-        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        throw new Error("Failed to submit report");
+        setIsLoading(false);
+          toast.error(
+            moderateResponse.data.reason,
+            {
+              position: "top-center",
+              autoClose: 2000,
+              hideProgressBar: true,
+            }
+          );
+          return;
       }
+
     } catch (e) {
       console.error("Error submitting report:", e);
       toast.error("Oops! Something went wrong. Please try again.", {
@@ -247,7 +297,7 @@ const NewReport = () => {
     <div className="min-h-screen bg-gray-50">
       {isLoading && (
         <div className="flex items-center justify-center h-screen">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin"/>
         </div>
       )}
       <div className="max-w-6xl mx-auto p-6">

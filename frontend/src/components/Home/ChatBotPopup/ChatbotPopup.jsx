@@ -19,42 +19,43 @@ const ChatbotPopup = ({setShowChatbot}) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom(messages);
-  }, [messages])
-
+  // Handles user message submission
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim()) return; // Prevent sending empty messages
 
     const userMessage = message;
-    setMessage('');
+    setMessage(''); // Clear input field
 
-    setMessages(prev => [...prev, {role: 'user', content: userMessage}]);
+    // Add user's message to the chat
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
       if (!Array.isArray(messages)) {
         throw new Error('Invalid messages array');
       }
+
+      // Send request to the chatbot backend API
       const response = await axios.post(`${url}/api/chatbot/message`, {
-        messages: [...messages, {role: 'user', content: userMessage}]
+        messages: [...messages, { role: 'user', content: userMessage }]
       });
 
       if (response.status !== 200) throw new Error('Failed to send message');
-      
+
+      // Extract response data and add chatbot reply to the chat
       const data = await response.data;
-      setMessages(prev => [...prev, {role: 'assistant', content: data.message}]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
     } catch (e) {
       console.error('Error:', e);
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Sorry, I could not understand that. Please try again.'
-      }])
+      }]);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Stop loading state
     }
-  }
+  };
 
   return (
     <div className='fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center'>

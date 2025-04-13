@@ -1,3 +1,14 @@
+/**
+ * Photo Detection Page Component
+ * 
+ * This component allows users to upload images or videos for SCTLD detection.
+ * Users can choose to upload a picture, video, or view a YOLO-detected video.
+ * 
+ * The page displays the uploaded media and the results of the detection process.
+ * Users can clear the uploaded media, view the results, and download the YOLO video.
+ * 
+ */
+
 import React, { useRef, useState, useEffect, useContext } from "react";
 import {
   Upload,
@@ -7,12 +18,16 @@ import {
   ChevronRight,
   Loader2,
   EyeIcon as Eye,
+  Settings,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { AppContext } from "@/context/AppContext";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 const PhotoDetection = () => {
   const [selectedOption, setSelectedOption] = useState("picture");
@@ -34,9 +49,19 @@ const PhotoDetection = () => {
   const { url } = useContext(AppContext);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const [showParameterPopup, setShowParameterPopup] = useState(false);
 
+  //Parameter for YOLO detection
+  const [parameters, setParameters] = useState({
+    conf_threshold_yolo: 0.7,
+    conf_threshold_sctldcnn: 0.75,
+    frame_skip: 3,
+  });
+
+  // Check if user is on a mobile device
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+  // Function to handle image selection from file input
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -46,6 +71,7 @@ const PhotoDetection = () => {
     }
   };
 
+  // Function to handle video selection from file input
   const handleVideoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -55,6 +81,7 @@ const PhotoDetection = () => {
     }
   };
 
+  // Function to start recording video from camera
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     videoRef.current.srcObject = stream;
@@ -73,12 +100,14 @@ const PhotoDetection = () => {
     setIsRecording(true);
   };
 
+  // Function to stop recording video from camera
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
     videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
   };
 
+  // Function to clear selected media and results
   const handleClear = () => {
     setSelectedImage(null);
     setSelectedVideo(null);
@@ -96,6 +125,16 @@ const PhotoDetection = () => {
     }
   };
 
+  // Function to handle parameter change for YOLO detection
+  const handleParameterChange = (param, value) => {
+    setParameters(prev => ({
+      ...prev,
+      [param]: value,
+    }));
+  };
+
+
+  // Function to upload image for SCTLD detection using the API endpoint
   const handleImageUpload = async () => {
     try {
       setIsFullLoading(true);
@@ -106,7 +145,7 @@ const PhotoDetection = () => {
       formData.append("file", selectedImage);
 
       const yoloResponse = axios.post(
-        `https://yolo.coralbase.net/sctld-yolo-img-streaming`,
+        `https://yolo.coralbase.net/sctldDetection_imgstreaming/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
         formData,
         {
           headers: {
@@ -183,6 +222,7 @@ const PhotoDetection = () => {
     };
   };
 
+  // Function to upload video for SCTLD detection using the API endpoint
   const handleVideoUpload = async () => {
     try {
       setIsFullLoading(true);
@@ -231,6 +271,7 @@ const PhotoDetection = () => {
     }
   };
 
+  // Function to upload video for SCTLD detection using the YOLO API endpoint
   const handleYoloUpload = async () => {
     try {
       setIsFullLoading(true);
@@ -238,7 +279,7 @@ const PhotoDetection = () => {
       formData.append("file", selectedVideo);
 
       const yoloResponse = await axios.post(
-        `https://yolo.coralbase.net/sctld-yolo-video`,
+        `https://yolo.coralbase.net/sctldDetection_video/${parameters.frame_skip}/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
         formData,
         {
           headers: {
@@ -256,7 +297,6 @@ const PhotoDetection = () => {
           autoClose: 2000,
           hideProgressBar: true,
         });
-        console.log("Yolo:", yoloResponse.data);
 
         const yoloVideoUrl = yoloResponse.data;
         setYoloResult(yoloVideoUrl);
@@ -275,39 +315,112 @@ const PhotoDetection = () => {
     }
   };
 
+  // Function to download the YOLO-detected video
   const handleViewYolo = () => {
     if (selectedOption === "yolo" && yoloResult) {
       const link = document.createElement("a");
-      link.href = yoloResult;
-      link.download = "detected-video.mp4";
+      link.href = yoloResult.url;
+      link.download = "";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
   };
 
+  // Function to navigate to the next frame in the detected frames list
   const handleNextFrame = () => {
     setCurrentFrameIndex((prev) =>
       prev < detectedFrames.length - 1 ? prev + 1 : prev
     );
   };
 
+  // Function to navigate to the previous frame in the detected frames list
   const handlePrevFrame = () => {
     setCurrentFrameIndex((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
+  // Function to open the camera for taking photos
   const openCamera = () => {
     if (cameraInputRef.current) {
       cameraInputRef.current.click();
     }
   };
 
+  // Function to handle user device compatibility
   const handleUserDevice = (e) => {
     toast.error("Sorry, your device is not supported for this feature", {
       position: "top-center",
       autoClose: 2000,
       hideProgressBar: true,
     });
+  };
+
+  const ParameterPopup = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Detection Parameters</h3>
+            <button onClick={() => setShowParameterPopup(false)} className="p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="conf_threshold_yolo">YOLO Confidence Threshold: {parameters.conf_threshold_yolo.toFixed(2)}</Label>
+              </div>
+              <Slider 
+                id="conf_threshold_yolo"
+                min={0}
+                max={1}
+                step={0.05}
+                value={[parameters.conf_threshold_yolo]} // Use array notation
+                onValueChange={(val) => handleParameterChange("conf_threshold_yolo", val[0])} 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="conf_threshold_sctldcnn">SCTLD CNN Confidence Threshold: {parameters.conf_threshold_sctldcnn.toFixed(2)}</Label>
+              </div>
+              <Slider 
+                id="conf_threshold_sctldcnn"
+                min={0}
+                max={1}
+                step={0.05}
+                value={[parameters.conf_threshold_sctldcnn]}
+                onValueChange={(val) => handleParameterChange("conf_threshold_sctldcnn", val[0])}
+              />
+            </div>
+
+            {selectedOption === "yolo" ? (
+              <div className="space-y-2">
+                <Label htmlFor="frame_skip">Frame Skip: {parameters.frame_skip}</Label>
+                <Slider 
+                  id="frame_skip"
+                  min={1}
+                  max={5}
+                  step={1}
+                  value={[parameters.frame_skip]}
+                  onValueChange={(val) => handleParameterChange("frame_skip", val[0])}
+                />
+              </div>
+            ) : null}
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowParameterPopup(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => setShowParameterPopup(false)}>
+                Apply
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -318,6 +431,9 @@ const PhotoDetection = () => {
           <span className="text-black">Processing File...</span>
         </div>
       )}
+
+      {showParameterPopup && <ParameterPopup />}
+
       <div className="flex justify-center mb-5 space-x-4">
         <button
           className={`px-4 py-2 ${selectedOption === "picture"
@@ -358,9 +474,20 @@ const PhotoDetection = () => {
       </div>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Upload size={20} />
-            <span>SCTLD Detection</span>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Upload size={20} />
+              <span>SCTLD Detection</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => setShowParameterPopup(true)}
+            >
+              <Settings size={16} />
+              <span className="ml-1">Parameters</span>
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>

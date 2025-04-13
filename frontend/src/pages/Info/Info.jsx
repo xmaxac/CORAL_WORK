@@ -1,3 +1,16 @@
+/**
+ * Info Page Component
+ * 
+ * This component displays information about Stony Coral Tissue Loss Disease (SCTLD) including:
+ * - Overview of the disease
+ * - Causes and contributing factors
+ * - Species affected by the disease
+ * - Current treatments and challenges
+ * - Resources for getting involved and learning more
+ * 
+ * This page does not require user authentication to view content.
+ */
+
 import React, {useState} from 'react'
 import { useNavigate } from 'react-router-dom';
 import {
@@ -31,11 +44,14 @@ import { ChevronRight, Download } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 
 const Info = () => {
+  // State to track the active tab in the Tabs component
   const [activeTab, setActiveTab] = useState("overview");
   const navigate = useNavigate();
 
+   // Hook for handling multi-language text translation
   const {t} = useTranslation();
 
+  // List of coral species affected by SCTLD/resistant and related information
   const speciesList = {
     highlyAffected: [
       { name: "Meandrina meandrites", common: "Maze Coral", role: "Important reef builder providing habitat for fish", image: '/MazeCoral.png' },
@@ -97,6 +113,7 @@ const Info = () => {
         </div>
       </div>
 
+      {/* Main Content */}
       <div className='max-w-7xl mx-auto px-4 py-12'>
         <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-8'>
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
@@ -441,6 +458,7 @@ const Info = () => {
         </Tabs>
       </div>
 
+      {/* Call to Action Section */}
       <div className='bg-blue-900 text-white py-12'>
         <div className='max-w-7xl mx-auto px-4 text-center'>
           <h2 className='text-3xl font-bold mb-6'>{t("info.callToAction.title")}</h2>

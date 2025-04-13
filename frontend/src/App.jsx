@@ -1,3 +1,13 @@
+/*
+ * Main Application Component
+ * 
+ * This file serves as the central component that organizes all pages and functionality
+ * for the application. It handles:
+ * - Routing between different pages (Home, Community, Database, etc.)
+ * - Managing popup components like Login and Chatbot
+ * - Displaying a persistent chat button in the bottom-right corner
+ */
+
 import React, {useState, useEffect} from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import DataPage from './pages/DataPage/DataPage'
@@ -91,7 +101,7 @@ const App = () => {
     setHasAccess(true);
   };
 
-  // Clear access (useful for testing)
+  // Clear access
   const clearAccess = () => {
     localStorage.removeItem('developerAccess');
     setHasAccess(false);
@@ -107,6 +117,7 @@ const App = () => {
     );
   }
 
+  // Main Routing and rendering of components
   return (
     <div>
       {showLogin?<LoginPopup setShowLogin={setShowLogin}/>:<></>}
