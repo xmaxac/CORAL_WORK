@@ -27,13 +27,15 @@ reportRouter.get('/user/:username', auth, getUserReports);
 
 // Route to create a new report (authentication required)
 reportRouter.post('/create', auth, upload.fields([
-  { name: 'images', maxCount: 10 } 
+  { name: 'images', maxCount: 10 },
+  { name: 'documents', maxCount: 10} 
 ]), createReport);
 // 'auth' middleware checks if the user is authenticated before creating a report
 // 'upload.fields()' middleware handles the file upload, allowing up to 10 images
 
 reportRouter.post('/moderate', auth, upload.fields([
-  { name: 'images', maxCount: 10 } 
+  { name: 'images', maxCount: 10 },
+  { name: 'documents', maxCount: 10} 
 ]), moderateReport);
 
 // Route to delete a report by its ID (authentication required)

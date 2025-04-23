@@ -30,6 +30,7 @@ const Reports = ({ report, currentUserId, onDelete }) => {
     longitude,
     likes,
     photos = [],
+    documents = [],
     title,
     created_at,
     report_date,
@@ -49,6 +50,8 @@ const Reports = ({ report, currentUserId, onDelete }) => {
   const { url, token } = useContext(AppContext);
 
   const hasValidPhotos = photos && photos.length > 0 && !photos.includes(null);
+  const hasValidDocuments =
+    documents && documents.length > 0 && !documents.includes(null);
 
   const handleDeleteReport = async () => {
     try {
@@ -114,6 +117,13 @@ const Reports = ({ report, currentUserId, onDelete }) => {
 
   const selectImage = (index) => {
     setCurrentImageIndex(index);
+  };
+
+  const truncateFileName = (fileName, maxLength) => {
+    if (fileName.length > maxLength) {
+      return fileName.substring(0, maxLength) + '...'
+    }
+    return fileName;
   };
 
   const countryName = countries.getName(country_code.trim(), "en", {
@@ -263,6 +273,36 @@ const Reports = ({ report, currentUserId, onDelete }) => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {hasValidDocuments && (
+          <div className="space-y-2">
+            <div className="relative">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                {documents.map((doc, index) => (
+                  <div
+                    key={index}
+                    className="p-3 border rounded-lg flex flex-col items-start justify-between bg-white shadow hover:shadow-md transition overflow-hidden max-w-[200px]"
+                  >
+                    <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                      {truncateFileName(doc.file_name, 20)}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      {/* Preview in new tab */}
+                      <a
+                        href={doc.document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 text-sm underline"
+                      >
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

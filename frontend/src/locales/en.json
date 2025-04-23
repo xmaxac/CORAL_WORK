@@ -241,7 +241,7 @@
         "reportTitlePlaceholder": "Enter Report Title",
         "dateOfDiscovery": "Date of Discovery*",
         "photoUpload": {
-          "title": "Photo Upload",
+          "title": "Media Upload",
           "addPhotos": "Add Photos",
           "selectedPhotos": "photo selected",
           "multipleSelectedPhotos": "photos selected",

@@ -82,30 +82,30 @@ const PhotoDetection = () => {
   };
 
   // Function to start recording video from camera
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    videoRef.current.srcObject = stream;
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      chunksRef.current.push(e.data);
-    };
-    mediaRecorderRef.current.onStop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/mp4" });
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      chunksRef.current = [];
-      setSelectedVideo(blob);
-    };
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-  };
+  // const startRecording = async () => {
+  //   const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  //   videoRef.current.srcObject = stream;
+  //   mediaRecorderRef.current = new MediaRecorder(stream);
+  //   mediaRecorderRef.current.ondataavailable = (e) => {
+  //     chunksRef.current.push(e.data);
+  //   };
+  //   mediaRecorderRef.current.onStop = () => {
+  //     const blob = new Blob(chunksRef.current, { type: "video/mp4" });
+  //     const url = URL.createObjectURL(blob);
+  //     setPreviewUrl(url);
+  //     chunksRef.current = [];
+  //     setSelectedVideo(blob);
+  //   };
+  //   mediaRecorderRef.current.start();
+  //   setIsRecording(true);
+  // };
 
-  // Function to stop recording video from camera
-  const stopRecording = () => {
-    mediaRecorderRef.current.stop();
-    videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-    setIsRecording(false);
-  };
+  // // Function to stop recording video from camera
+  // const stopRecording = () => {
+  //   mediaRecorderRef.current.stop();
+  //   videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+  //   setIsRecording(false);
+  // };
 
   // Function to clear selected media and results
   const handleClear = () => {
@@ -138,7 +138,7 @@ const PhotoDetection = () => {
   const handleImageUpload = async () => {
     try {
       setIsFullLoading(true);
-      setIsNormalLoading(true);
+      // setIsNormalLoading(true);
       setIsYoloLoading(true);
 
       const formData = new FormData();
@@ -155,48 +155,53 @@ const PhotoDetection = () => {
         }
       );
 
-      const normalResponse = axios.post(
-        `${url}/api/detection/upload`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      // const normalResponse = axios.post(
+      //   `${url}/api/detection/upload`,
+      //   formData,
+      //   {
+      //     headers: {
+      //       "Content-Type": "multipart/form-data",
+      //     },
+      //   }
+      // );
 
-      normalResponse.then((normalResponse) => {
-        if (normalResponse.data) {
-          toast.success("Image uploaded successfully", {
-            position: "top-center",
-            autoClose: 2000,
-            hideProgressBar: true,
-          });
+      // normalResponse.then((normalResponse) => {
+      //   if (normalResponse.data) {
+      //     toast.success("Image uploaded successfully", {
+      //       position: "top-center",
+      //       autoClose: 2000,
+      //       hideProgressBar: true,
+      //     });
 
-          let predictedClass = normalResponse.data.predictedClass;
-          if (predictedClass === "Healthy Coral") {
-            predictedClass = "SCTLD Not Detected";
-          }
+      //     let predictedClass = normalResponse.data.predictedClass;
+      //     if (predictedClass === "Healthy Coral") {
+      //       predictedClass = "SCTLD Not Detected";
+      //     }
 
-          setResults({
-            confidence: normalResponse.data.confidence,
-            predictedClass,
-          });
+      //     setResults({
+      //       confidence: normalResponse.data.confidence,
+      //       predictedClass,
+      //     });
 
-          setShowResults(true);
-          setIsNormalLoading(false);
-        }
-      })
-        .catch((e) => {
-          console.error("Error uploading image:", e);
-          toast.error("Error uploading image", { autoClose: 2000 });
-          setIsNormalLoading(false);
-        })
-        .finally(() => {
-          if (!isYoloLoading) setIsFullLoading(false);
-        });
+      //     setShowResults(true);
+      //     setIsNormalLoading(false);
+      //   }
+      // })
+      //   .catch((e) => {
+      //     console.error("Error uploading image:", e);
+      //     toast.error("Error uploading image", { autoClose: 2000 });
+      //     setIsNormalLoading(false);
+      //   })
+      //   .finally(() => {
+      //     if (!isYoloLoading) setIsFullLoading(false);
+      //   });
 
       yoloResponse.then((yoloResponse) => {
+        toast.success("Image uploaded successfully", {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
         const blob = new Blob([yoloResponse.data], { type: "image/jpeg" });
 
         if (blob.size > 0) {
@@ -205,6 +210,9 @@ const PhotoDetection = () => {
         }
 
         setIsYoloLoading(false);
+        setShowResults(true);
+
+        console.log(yoloResponse)
       })
         .catch((e) => {
           console.error("Error uploading to YOLO:", e);
@@ -223,53 +231,53 @@ const PhotoDetection = () => {
   };
 
   // Function to upload video for SCTLD detection using the API endpoint
-  const handleVideoUpload = async () => {
-    try {
-      setIsFullLoading(true);
-      const formData = new FormData();
-      formData.append("file", selectedVideo);
+  // const handleVideoUpload = async () => {
+  //   try {
+  //     setIsFullLoading(true);
+  //     const formData = new FormData();
+  //     formData.append("file", selectedVideo);
 
-      const normalResponse = await axios.post(
-        `https://video-predict.coralbase.net/predict_video`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+  //     // const normalResponse = await axios.post(
+  //     //   `https://video-predict.coralbase.net/predict_video`,
+  //     //   formData,
+  //     //   {
+  //     //     headers: {
+  //     //       "Content-Type": "multipart/form-data",
+  //     //     },
+  //     //   }
+  //     // );
 
-      setIsFullLoading(false);
+  //     setIsFullLoading(false);
 
-      if (normalResponse.data) {
-        toast.success("Video uploaded successfully", {
-          position: "top-center",
-          autoClose: 2000,
-          hideProgressBar: true,
-        });
+  //     if (normalResponse.data) {
+  //       toast.success("Video uploaded successfully", {
+  //         position: "top-center",
+  //         autoClose: 2000,
+  //         hideProgressBar: true,
+  //       });
 
-        const processedFrame = normalResponse.data.detected_frames.map(
-          (frame) => ({
-            base64Image: frame.frame,
-            confidence: frame.confidence,
-          })
-        );
+  //       const processedFrame = normalResponse.data.detected_frames.map(
+  //         (frame) => ({
+  //           base64Image: frame.frame,
+  //           confidence: frame.confidence,
+  //         })
+  //       );
 
-        setDetectedFrames(processedFrame);
+  //       setDetectedFrames(processedFrame);
 
-        setShowResults(true);
-        setCurrentFrameIndex(0);
-      }
-    } catch (e) {
-      console.error("Error uploading video for SCTLD Detection:", e);
-      toast.error("Error uploading video for SCTLD Detection", {
-        position: "top-center",
-        autoClose: 2000,
-        hideProgressBar: true,
-      });
-      setIsFullLoading(false);
-    }
-  };
+  //       setShowResults(true);
+  //       setCurrentFrameIndex(0);
+  //     }
+  //   } catch (e) {
+  //     console.error("Error uploading video for SCTLD Detection:", e);
+  //     toast.error("Error uploading video for SCTLD Detection", {
+  //       position: "top-center",
+  //       autoClose: 2000,
+  //       hideProgressBar: true,
+  //     });
+  //     setIsFullLoading(false);
+  //   }
+  // };
 
   // Function to upload video for SCTLD detection using the YOLO API endpoint
   const handleYoloUpload = async () => {
@@ -447,7 +455,7 @@ const PhotoDetection = () => {
         >
           Upload Picture
         </button>
-        <button
+        {/* <button
           className={`px-4 py-2 ${selectedOption === "video"
             ? "bg-blue-500 text-white hover:bg-blue-700"
             : "bg-gray-200 hover:bg-gray-400"
@@ -458,7 +466,7 @@ const PhotoDetection = () => {
           }}
         >
           Upload Video
-        </button>
+        </button> */}
         <button
           className={`px-4 py-2 ${selectedOption === "yolo"
             ? "bg-blue-500 text-white hover:bg-blue-700"
@@ -541,7 +549,6 @@ const PhotoDetection = () => {
                   />
 
                   {selectedOption === "picture" ||
-                    selectedOption === "video" ||
                     selectedOption === "yolo" ? (
                     <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
                       <span className="text-sm text-slate-400">or</span>
@@ -560,9 +567,9 @@ const PhotoDetection = () => {
                         <span>
                           {selectedOption === "picture"
                             ? "Take Photo"
-                            : selectedOption === "video"
-                              ? "Take Video"
-                              : "Upload Video for yolo"}
+                            : selectedOption === "yolo"
+                              ? "Upload Video for yolo" : null
+                            }
                         </span>
                       </Button>
                     </div>
@@ -576,8 +583,7 @@ const PhotoDetection = () => {
                       alt="Preview"
                       className="w-full h-full object-contain rounded-lg"
                     />
-                  ) : selectedOption === "video" ||
-                    selectedOption === "yolo" ? (
+                  ) : selectedOption === "yolo" ? (
                     <video
                       src={previewUrl}
                       alt="Preview"
@@ -619,25 +625,26 @@ const PhotoDetection = () => {
 
       {showResults && (
         <Card className="w-full mt-5">
-          {selectedOption === "picture" && results ? (
+          {selectedOption === "picture" ? (
             <CardContent className="flex flex-col items-center">
               {isNormalLoading ? (
                 <Loader2 className="h-8 w-8 animate-spin text-black" />
               ) : (
-                <>
-                  <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
-                    <div
-                      style={{ width: `${results.confidence * 100}%` }}
-                      className="h-4 rounded-full bg-blue-500"
-                    />
-                  </div>
-                  <p className="mt-2 text-gray-600">
-                    Confidence: {(results.confidence * 100).toFixed(2)}%
-                  </p>
-                  <h2 className="text-2xl font-bold mt-4">
-                    {results.predictedClass}
-                  </h2>
-                </>
+                // <>
+                //   <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
+                //     <div
+                //       style={{ width: `${results.confidence * 100}%` }}
+                //       className="h-4 rounded-full bg-blue-500"
+                //     />
+                //   </div>
+                //   <p className="mt-2 text-gray-600">
+                //     Confidence: {(results.confidence * 100).toFixed(2)}%
+                //   </p>
+                //   <h2 className="text-2xl font-bold mt-4">
+                //     {results.predictedClass}
+                //   </h2>
+                // </>
+                null
               )}
               {yoloResult && selectedOption == "picture" && (
                 <div className="mt-4">
@@ -657,59 +664,6 @@ const PhotoDetection = () => {
                   )}
                 </div>
               )}
-            </CardContent>
-          ) : selectedOption === "video" && detectedFrames.length >= 0 ? (
-            <CardContent className="flex flex-col items-center">
-              <div className="flex items-center space-x-4 w-full">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevFrame}
-                  disabled={currentFrameIndex === 0}
-                >
-                  <ChevronLeft size={16} />
-                </Button>
-
-                <div className="flex-1 flex flex-col items-center pt-5 ">
-                  <img
-                    src={`data:image/jpeg;base64,${detectedFrames[currentFrameIndex].base64Image}`}
-                    alt={`Frame ${currentFrameIndex + 1}`}
-                    className="max-h-[400px] object-contain"
-                  />
-
-                  <div className="mt-4 text-center">
-                    <div className="w-full bg-gray-200 rounded-full h-4 mt-2 relative overflow-hidden">
-                      <div
-                        style={{
-                          width: `${detectedFrames[currentFrameIndex].confidence * 100
-                            }%`,
-                        }}
-                        className="h-4 rounded-full bg-blue-500"
-                      />
-                    </div>
-                    <p className="text-gray-600">
-                      Confidence:{" "}
-                      {(
-                        detectedFrames[currentFrameIndex].confidence * 100
-                      ).toFixed(2)}
-                      %
-                    </p>
-                    <h2 className="text-2xl font-bold">
-                      {detectedFrames[currentFrameIndex].predictedClass}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Frame {currentFrameIndex + 1} of {detectedFrames.length}
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={handleNextFrame}
-                  disabled={currentFrameIndex === detectedFrames.length - 1}
-                >
-                  <ChevronRight size={16} />
-                </Button>
-              </div>
             </CardContent>
           ) : selectedOption === "yolo" && yoloResult ? (
             <CardContent className="felx flex-col items-center">

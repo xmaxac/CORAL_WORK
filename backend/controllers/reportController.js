@@ -7,18 +7,31 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const processImageUpload = async (fileBuffer, existingImageUrl = null, userId) => {
+const processImageUpload = async (fileBuffer, existingImageUrl = null, reportId, mimetype) => {
   if (!fileBuffer) return existingImageUrl;
 
   try {
-    const fileName = `${userId}-reportImg-${Date.now()}.jpeg`;
-    const imageUrl = await uploadToS3(fileBuffer, `reports/${userId}`, fileName);
+    const fileName = `${reportId}-reportImg-${Date.now()}.jpeg`;
+    const imageUrl = await uploadToS3(fileBuffer, `reports/${reportId}/images`, fileName, mimetype);
     return imageUrl;
   } catch (e) {
     console.error('Error uploading image:', e);
     throw new Error('Error uploading image:', e);
   }
 };
+
+const processDocumentUpload = async (file, reportId) => {
+  if (!file) return null;
+
+  try {
+    const fileName = `${file.originalname}-${Date.now()}`;
+    const documentUrl = await uploadToS3(file.buffer, `reports/${reportId}/documents`, fileName, file.mimetype);
+    return documentUrl;
+  } catch (e) {
+    console.error('Error uploading document:', e);
+    throw new Error('Error uploading document:', e);
+  }
+}
 
 export const createReport = async (req, res) => {
   const client = await pool.connect();
@@ -52,7 +65,7 @@ export const createReport = async (req, res) => {
     let uploadedImageUrls = []
     if (req.files && Array.isArray(req.files.images)) {
       for (const file of req.files.images) {
-        const imageUrl = await processImageUpload(file.buffer, null, reportId);
+        const imageUrl = await processImageUpload(file.buffer, null, reportId, file.mimetype);
         uploadedImageUrls.push(imageUrl);
 
         await client.query(
@@ -62,12 +75,36 @@ export const createReport = async (req, res) => {
       }
     }
 
+    let uploadedDocumentUrls = []
+    if (req.files && Array.isArray(req.files.documents)) {
+      for (const file of req.files.documents) {
+        const documentUrl = await processDocumentUpload(file, reportId);
+        uploadedDocumentUrls.push(documentUrl);
+
+        await client.query(
+          `INSERT INTO report_documents (file_name, file_type, document_url, report_id) VALUES ($1, $2, $3, $4)`,
+          [file.originalname, file.mimetype, documentUrl, reportId]
+        );
+      }
+    }
+
     const completeReport = await client.query(
-      `SELECT r.*, array_agg(rp.photo_url) as photos
-      FROM reports r
-      LEFT JOIN report_photos rp ON r.id = rp.report_id
-      WHERE r.id = $1
-      GROUP BY r.id`,
+      `SELECT r.*, array_agg(rp.photo_url) as photos,
+      COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'file_name', rd.file_name,
+            'file_type', rd.file_type,
+            'document_url', rd.document_url
+          )
+        ) FILTER (WHERE rd.id IS NOT NULL),
+        '[]'
+      ) AS documents
+    FROM reports r
+    LEFT JOIN report_photos rp ON r.id = rp.report_id
+    LEFT JOIN report_documents rd ON r.id = rd.report_id
+    WHERE r.id = $1
+    GROUP BY r.id`,
       [reportId]
     );
 
@@ -89,7 +126,8 @@ export const createReport = async (req, res) => {
         reef_type: reefType,
         average_depth: averageDepth,
         water_temp: waterTemp,
-        photos: completeReport.rows[0].photos.filter(url => url !== null) // Filter out null values
+        photos: completeReport.rows[0].photos.filter(url => url !== null), // Filter out null values
+        documents: completeReport.rows[0].documents.filter(url => url !== null), // Filter out null values
       }
     });
 
@@ -227,6 +265,7 @@ export const moderateReport = async (req, res) => {
         flagged: true,
         reason: 'Flagged for inappropriate content or not marine-related content',
         flaggedSections,
+        
         isMarineRelated
       });
     }
@@ -379,7 +418,15 @@ export const getAllReports = async (req, res) => {
           c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
           cu.username AS comment_username, cu.profile_image AS comment_profile_image, cu.name AS comment_name,
           COALESCE(likes_count.likes, 0) AS likes,
-          array_agg(rp.photo_url) AS report_photo_urls
+          array_agg(rp.photo_url) AS report_photo_urls,
+          COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'file_name', rd.file_name,
+              'file_type', rd.file_type,
+              'document_url', rd.document_url
+            )
+          ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS documents
         FROM reports r
         JOIN users u ON r.user_id = u.id
         LEFT JOIN report_comments c ON r.id = c.report_id
@@ -390,6 +437,7 @@ export const getAllReports = async (req, res) => {
           GROUP BY report_id
         ) likes_count ON r.id = likes_count.report_id
         LEFT JOIN report_photos rp ON r.id = rp.report_id
+        LEFT JOIN report_documents rd ON r.id = rd.report_id
         GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at,
                 u.username, u.profile_image, u.name,
                 c.id, c.comment, c.user_id,
@@ -416,6 +464,7 @@ export const getAllReports = async (req, res) => {
           average_depth: row.average_depth, 
           water_temp: row.water_temp,  
           photos: row.report_photo_urls || [],
+          documents: row.documents || [],
           user: {
             username: row.username,
             profile_image: row.profile_image,
