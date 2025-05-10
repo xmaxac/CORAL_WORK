@@ -291,10 +291,10 @@ const Reports = ({ report, currentUserId, onDelete }) => {
                     <div className="mt-2 flex items-center gap-2">
                       {/* Preview in new tab */}
                       <a
-                        href={doc.document_url}
+                        href={doc.s3_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 text-sm underline"
+                        className="text-blue-600 text-sm underline cursor-pointer"
                       >
                         Download
                       </a>

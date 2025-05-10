@@ -95,7 +95,7 @@ export const createReport = async (req, res) => {
           DISTINCT jsonb_build_object(
             'file_name', rd.file_name,
             'file_type', rd.file_type,
-            'document_url', rd.document_url
+            's3_url', rd.s3_url
           )
         ) FILTER (WHERE rd.id IS NOT NULL),
         '[]'
@@ -424,7 +424,7 @@ export const getAllReports = async (req, res) => {
             DISTINCT jsonb_build_object(
               'file_name', rd.file_name,
               'file_type', rd.file_type,
-              'document_url', rd.document_url
+              's3_url', rd.s3_url
             )
           ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS documents
         FROM reports r
