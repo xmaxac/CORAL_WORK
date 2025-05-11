@@ -31,6 +31,7 @@ const Reports = ({ report, currentUserId, onDelete }) => {
     likes,
     photos = [],
     documents = [],
+    videos = [],
     title,
     created_at,
     report_date,
@@ -50,8 +51,8 @@ const Reports = ({ report, currentUserId, onDelete }) => {
   const { url, token } = useContext(AppContext);
 
   const hasValidPhotos = photos && photos.length > 0 && !photos.includes(null);
-  const hasValidDocuments =
-    documents && documents.length > 0 && !documents.includes(null);
+  const hasValidDocuments = documents && documents.length > 0 && !documents.includes(null);
+  const hasValidVideos = videos && videos.length > 0 && !videos.includes(null);
 
   const handleDeleteReport = async () => {
     try {
@@ -273,6 +274,26 @@ const Reports = ({ report, currentUserId, onDelete }) => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {hasValidVideos && (
+          <div className="space-y-2">
+            <div className="relative">
+              <div className="relative aspect-video rounded-lg overflow-hidden">
+                {videos.map((video, i) => (
+                  <div key={i}>
+                    <video
+                      controls
+                      className="w-full h-full object-cover"
+                      src={video.s3_url}
+                    >
+                      Your browser doe snot support the video tag
+                    </video>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

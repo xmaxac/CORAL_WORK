@@ -43,6 +43,7 @@ export const uploadToS3 = async (fileBuffer, folder, fileName, contentType) => {
     Key: key,
     Body: fileBuffer,
     ContentType: contentType,
+    ContentDisposition: 'inline',
   };
 
   try {
