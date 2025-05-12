@@ -466,8 +466,11 @@ const NewReport = () => {
   return (
     <>
       {isLoading && (
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="h-8 w-8 animate-spin"/>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500"/>
+            <p className="text-lg font-medium">Submitting your report...</p>
+          </div>
         </div>
       )}
       <div className="min-h-screen bg-gray-50">

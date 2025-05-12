@@ -30,7 +30,8 @@ import {
   GoogleMap,
   LoadScript,
   Marker,
-  InfoWindow
+  InfoWindow,
+  HeatmapLayer
 } from "@react-google-maps/api";
 import { ChartContainer,ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, XAxis, YAxis  } from 'recharts';
@@ -51,6 +52,8 @@ const DataPage = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);  // Currently selected marker
   const [chartData, setChartData] = useState([]);  // Data for country bar chart
   const [latestReports, setLatestReports] = useState([]);  // Recent reports for sidebar
+  const [showHeatMap, setShowHeatMap] = useState(false);
+  const [heatMapData, setHeatMapData] = useState([]);
   
   // Get authentication token and API URL from app context
   const {token, url} = useContext(AppContext);
@@ -183,56 +186,94 @@ const DataPage = () => {
                     <Map size={20} />
                     <span>{t('data.map.title')}</span>
                   </div>
+                  <button onClick={() => setShowHeatMap(prev => !prev)}>
+                    {showHeatMap ? "Show Markers" : "Show Heatmap"}
+                  </button>
                 </CardTitle>
               </CardHeader>
               <CardContent >
                 <div className='w-full h-96 mb-6 bg-slate-100 rounded-lg flex items-center justify-center '>
                   {/* Google Maps Component */}
-                  <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY} libraries={libraries}>
+                  <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY} libraries={['visualization', ...libraries]}>
                     <GoogleMap
                       mapContainerStyle={{ height: "100%", width: "100%" }}
                       center={pos}
                       zoom={6.5}
-                      onLoad={map => (mapRef.current = map)}
-                    >
-                      {/* Create a marker for each report location */}
-                      {locations.map((location) => (
-                        <Marker 
-                          key={location.id}
-                          position={{ lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) }}
-                          onClick={() => handleMarkerClick(location)}
-                        />
-                      ))}
+                      onLoad={(map) => {
+                        mapRef.current = map;
                       
-                      {/* Show info window when a marker is selected */}
-                      {selectedLocation && (
-                        <InfoWindow
-                          position={{ lat: parseFloat(selectedLocation.latitude), lng: parseFloat(selectedLocation.longitude) }}
-                          onCloseClick={() => setSelectedLocation(null)}
-                        >
-                          <div>
-                            {/* Show photos if available */}
-                            {selectedLocation.photos && selectedLocation.photos[0] != null ? (
-                                selectedLocation.photos.length === 1 ? (
-                                  <img src={selectedLocation.photos[0]} alt={selectedLocation.title} style={{ width: '100%' }} />
-                                ) : (
-                                  <Carousel showThumbs={false}>
-                                    {selectedLocation.photos.map((photo, index) => (
-                                      <div key={index}>
-                                        <img src={photo} alt={`${selectedLocation.title} ${index + 1}`} style={{ width: '100%' }} />
-                                      </div>
-                                    ))}
-                                  </Carousel>
-                                )
-                              ) : (
-                                <></>
-                              )}
-                            <h3>{selectedLocation.title}</h3>
-                            <div style={{ maxHeight: '100px', overflowY: 'auto'}}>
-                              <p>{selectedLocation.description}</p>
-                            </div>
-                          </div>
-                        </InfoWindow>
+                        const google = window.google;
+                      
+                        const data = locations.map((loc) => ({
+                          location: new google.maps.LatLng(
+                            parseFloat(loc.latitude),
+                            parseFloat(loc.longitude)
+                          ),
+                          weight: 1, // or custom weight
+                        }));
+                      
+                        setHeatMapData(data);
+                      }}
+                    >
+                      {showHeatMap && heatMapData.length > 0 ? (
+                        <HeatmapLayer
+                          data={heatMapData}
+                          options={{
+                            radius: 80, // Spread size
+                            dissipating: true,
+                            opacity: 0.6,
+                            gradient: [
+                              "rgba(0, 0, 255, 0)",     // Transparent blue
+                              "rgba(0, 0, 255, 0.5)",   // Light blue
+                              "rgba(0, 255, 255, 0.7)", // Cyan
+                              "rgba(0, 255, 0, 0.7)",   // Green
+                              "rgba(255, 255, 0, 0.7)", // Yellow
+                              "rgba(255, 0, 0, 1.0)",   // Red
+                            ]
+                          }}
+                        />
+                      ) : (
+                        <>
+                          {/* Create a marker for each report location */}
+                          {locations.map((location) => (
+                            <Marker 
+                              key={location.id}
+                              position={{ lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) }}
+                              onClick={() => handleMarkerClick(location)}
+                            />
+                          ))}
+                          
+                          {/* Show info window when a marker is selected */}
+                          {selectedLocation && (
+                            <InfoWindow
+                              position={{ lat: parseFloat(selectedLocation.latitude), lng: parseFloat(selectedLocation.longitude) }}
+                              onCloseClick={() => setSelectedLocation(null)}
+                            >
+                              <div>
+                                {/* Show photos if available */}
+                                {selectedLocation.photos && selectedLocation.photos[0] != null ? (
+                                    selectedLocation.photos.length === 1 ? (
+                                      <img src={selectedLocation.photos[0]} alt={selectedLocation.title} style={{ width: '100%' }} />
+                                    ) : (
+                                      <Carousel showThumbs={false}>
+                                        {selectedLocation.photos.map((photo, index) => (
+                                          <div key={index}>
+                                            <img src={photo} alt={`${selectedLocation.title} ${index + 1}`} style={{ width: '100%' }} />
+                                          </div>
+                                        ))}
+                                      </Carousel>
+                                    )
+                                  ) : (
+                                    <></>
+                                  )}
+                                <h3>{selectedLocation.title}</h3>
+                                <div style={{ maxHeight: '100px', overflowY: 'auto'}}>
+                                  <p>{selectedLocation.description}</p>
+                                </div>
+                              </div>
+                            </InfoWindow>
+                          )}
+                        </>
                       )}
                     </GoogleMap>
                   </LoadScript>
