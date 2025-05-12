@@ -902,11 +902,6 @@ const NewReport = () => {
                                 ))}
                               </div>
                             )}
-                            <p className="text-sm text-gary-500 mt-1">
-                              {t(
-                                "newReport.form.reportDetails.photoUpload.resizeNote"
-                              )}
-                            </p>
                           </div>
                         </div>
                         <div className="space-y-2">

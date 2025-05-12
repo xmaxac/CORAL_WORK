@@ -167,6 +167,13 @@ const DataPage = () => {
     }
   };
 
+  const truncateFileName = (fileName, maxLength) => {
+    if (fileName.length > maxLength) {
+      return fileName.substring(0, maxLength) + '...'
+    }
+    return fileName;
+  };
+
   // Calculate maximum value for chart Y-axis scale
   const maxCases = chartData.length > 0 ? Math.max(...chartData.map(data => data.cases)) : 0;
 
@@ -249,28 +256,98 @@ const DataPage = () => {
                               position={{ lat: parseFloat(selectedLocation.latitude), lng: parseFloat(selectedLocation.longitude) }}
                               onCloseClick={() => setSelectedLocation(null)}
                             >
-                              <div>
-                                {/* Show photos if available */}
-                                {selectedLocation.photos && selectedLocation.photos[0] != null ? (
-                                    selectedLocation.photos.length === 1 ? (
-                                      <img src={selectedLocation.photos[0]} alt={selectedLocation.title} style={{ width: '100%' }} />
-                                    ) : (
-                                      <Carousel showThumbs={false}>
-                                        {selectedLocation.photos.map((photo, index) => (
-                                          <div key={index}>
-                                            <img src={photo} alt={`${selectedLocation.title} ${index + 1}`} style={{ width: '100%' }} />
+                                <Card className="w-[300px] rounded-xl shadow-lg overflow-hidden">
+                                  <CardHeader className="pb-2">
+                                    <h3 className="text-lg font-semibold truncate">{selectedLocation.title}</h3>
+                                  </CardHeader>
+
+                                  <CardContent className="space-y-2">
+                                    {/* Image or Carousel */}
+                                    {selectedLocation.photos && selectedLocation.photos.length && selectedLocation.photos != null > 0 && (
+                                      selectedLocation.photos.length === 1 ? (
+                                        <img
+                                          src={selectedLocation.photos[0]}
+                                          alt={selectedLocation.title}
+                                          className="rounded-md w-full h-40 object-cover"
+                                        />
+                                      ) : (
+                                        <Carousel showThumbs={false} showStatus={false} infiniteLoop>
+                                          {selectedLocation.photos.map((photo, i) => (
+                                            <div key={i}>
+                                              <img
+                                                src={photo}
+                                                alt={`${selectedLocation.title} ${i + 1}`}
+                                                className="rounded-md w-full h-40 object-cover"
+                                              />
+                                            </div>
+                                          ))}
+                                        </Carousel>
+                                      )
+                                    )}
+                                    {selectedLocation.videos && selectedLocation.videos.length > 0 && (
+                                      selectedLocation.videos.length === 1 ? (
+                                        <video
+                                          controls
+                                          className='rounded-md w-full h-full object-cover'
+                                          src={selectedLocation.videos[0].s3_url}
+                                        >
+                                          Your browser does not support the video tag
+                                        </video>
+                                      ) : (
+                                        <Carousel showThumbs={false} showStatus={false} infiniteLoop>
+                                          {selectedLocation.videos.map((video, i) => (
+                                            <div key={i}>
+                                              <video
+                                                controls
+                                                className='rounded-md w-full h-full object-cover'
+                                                src={video.s3_url}
+                                              >
+                                                Your browser does not support the video tag
+                                              </video>
+                                            </div>
+                                          ))}
+                                        </Carousel>
+                                      )
+                                    )}
+                                    {selectedLocation.documents && selectedLocation.documents.length > 0 && (
+                                      <div className="grid gap-4 mt-4">
+                                        {selectedLocation.documents.map((doc, index) => (
+                                          <div
+                                            key={index}
+                                            className="p-3 border rounded-lg flex flex-col items-start justify-between bg-white shadow hover:shadow-md transition overflow-hidden"
+                                          >
+                                            <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                              {truncateFileName(doc.file_name, 20)}
+                                            </p>
+                                            <div className="mt-2 flex items-center gap-2">
+                                              {/* Preview in new tab */}
+                                              <a
+                                                href={doc.s3_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 text-sm underline cursor-pointer"
+                                              >
+                                                Download
+                                              </a>
+                                            </div>
                                           </div>
                                         ))}
-                                      </Carousel>
-                                    )
-                                  ) : (
-                                    <></>
-                                  )}
-                                <h3>{selectedLocation.title}</h3>
-                                <div style={{ maxHeight: '100px', overflowY: 'auto'}}>
-                                  <p>{selectedLocation.description}</p>
-                                </div>
-                              </div>
+                                      </div>
+                                    )}
+                                    {/* Description */}
+                                    {selectedLocation.description && (
+                                      <p className="text-sm text-gray-700 max-h-[80px] overflow-y-auto">
+                                        {selectedLocation.description}
+                                      </p>
+                                    )}
+
+                                    {/* Coordinates */}
+                                    <div className="text-xs text-gray-500">
+                                      <Map className="inline-block w-3 h-3 mr-1" />
+                                      {`${parseFloat(selectedLocation.latitude).toFixed(4)}, ${parseFloat(selectedLocation.longitude).toFixed(4)}`}
+                                    </div>
+                                  </CardContent>
+                                </Card>
                             </InfoWindow>
                           )}
                         </>

@@ -288,7 +288,7 @@ const Reports = ({ report, currentUserId, onDelete }) => {
                       className="w-full h-full object-cover"
                       src={video.s3_url}
                     >
-                      Your browser doe snot support the video tag
+                      Your browser does not support the video tag
                     </video>
                   </div>
                 ))}
