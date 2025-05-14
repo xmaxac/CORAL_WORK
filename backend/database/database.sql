@@ -13,14 +13,6 @@ CREATE TABLE users (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE followers (
-    follower_id UUID NOT NULL,
-    followed_id UUID NOT NULL,
-    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (follower_id, followed_id)
-);
-
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -70,6 +62,15 @@ CREATE TABLE report_photos (
 	photo_url TEXT NOT NULL,
 	photo_description TEXT,
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE report_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id UUID REFERENCES reports(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  s3_url TEXT NOT NULL,
+  uploaded_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_reports_user ON reports(user_id);

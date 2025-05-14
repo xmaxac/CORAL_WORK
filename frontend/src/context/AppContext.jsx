@@ -57,6 +57,7 @@ const AppContextProvider = (props) => {
     } else {
       setUser(null);
       setProfile(null);
+      setToken("")
     }
   }, [token, fetchUserData]);
 

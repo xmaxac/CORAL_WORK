@@ -573,26 +573,7 @@ const Profile = () => {
                   </span>
                 </div>
               </div>
-              {/* <div className="flex gap-2">
-                <div className="flex gap-1 items-center">
-                  <span className="font-bold text-xs">
-                    {profile?.following_count}
-                  </span>
-                  <span className="text-slate-500 text-xs">Following</span>
-                </div>
-                <div className="flex gap-1 items-center">
-                  <span className="font-bold text-xs">
-                    {profile?.followers_count}
-                  </span>
-                  <span className="text-slate-500 text-xs">Followers</span>
-                </div>
-              </div> */}
             </div>
-            {/* <div className="flex w-full border-b border-gray-700 mt-4">
-              <div className="w-full text-center py-2">
-                <span className="text-sm font-bold">Reports</span>
-              </div>
-            </div> */}
           </>
           ) : (
             <div className="flex items-center justify-center h-screen">

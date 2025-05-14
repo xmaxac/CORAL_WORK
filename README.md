@@ -1,5 +1,5 @@
 # 🌊 CoralBase – A Platform for Stony Coral Tissue Loss Disease Research  
-### CoralBase Research Portfolio - https://osceolak12-my.sharepoint.com/:w:/g/personal/5047528_student_osceolaschools_net/EaL1SjSILYNHthF8On6rpFUBQ3i-7GAFZiHe2VYwADNPSA?e=DX7XkN
+### [Click here to view the CoralBase Research Portfolio!](https://osceolak12-my.sharepoint.com/:w:/g/personal/5047528_student_osceolaschools_net/EaL1SjSILYNHthF8On6rpFUB0c033oUMq2zt3x2KnnJYdA?e=dK1LMb)
 ## Overview  
 CoralBase is an open-source web platform that helps researchers, conservationists, and marine biologists track, analyze, and combat Stony Coral Tissue Loss Disease (SCTLD). Using AI-powered image recognition, crowdsourced data, and interactive visualizations, CoralBase enables better detection and understanding of coral diseases.  
 

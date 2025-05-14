@@ -35,14 +35,15 @@ const s3Client = new S3Client({
  * @param {string} fileName - The original file name.
  * @returns {string} URL of the uploaded image.
  */
-export const uploadToS3 = async (fileBuffer, folder, fileName) => {
+export const uploadToS3 = async (fileBuffer, folder, fileName, contentType) => {
   const key = `${folder}/${uuidv4()}-${fileName}`;
 
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: key,
     Body: fileBuffer,
-    ContentType: 'image/jpeg'
+    ContentType: contentType,
+    ContentDisposition: 'inline',
   };
 
   try {

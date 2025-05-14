@@ -101,12 +101,6 @@ const App = () => {
     setHasAccess(true);
   };
 
-  // Clear access
-  const clearAccess = () => {
-    localStorage.removeItem('developerAccess');
-    setHasAccess(false);
-  };
-
   // If no access, show only the developer access popup
   if (!hasAccess) {
     return (
@@ -119,7 +113,7 @@ const App = () => {
 
   // Main Routing and rendering of components
   return (
-    <div>
+    <div className=''>
       {showLogin?<LoginPopup setShowLogin={setShowLogin}/>:<></>}
       {showChatbot?<ChatbotPopup setShowChatbot={setShowChatbot}/>:<></>}
       <Navbar setShowLogin={setShowLogin}/>
