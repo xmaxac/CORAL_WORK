@@ -13,6 +13,16 @@ CREATE TABLE users (
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE messages (
+  id SERIAL PRIMARY KEY,
+  sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipient_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  read BOOLEAN DEFAULT FALSE
+);
+
+
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -77,3 +87,4 @@ CREATE INDEX idx_reports_user ON reports(user_id);
 CREATE INDEX idx_reports_location ON reports(latitude, longitude);
 CREATE INDEX idx_reports_country ON reports(country_code);
 CREATE INDEX idx_reports_photos_report ON report_photos(report_id);
+CREATE INDEX idx_conversation ON messages (sender_id, recipient_id, created_at);

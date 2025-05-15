@@ -12,7 +12,7 @@ i18n
       es: { translation: esTranslations },
     },
     fallbackLng: 'en',
-    debug: true,
+    debug: false,
     interpolation: {
       escapeValue: false, // React already escapes values
     }

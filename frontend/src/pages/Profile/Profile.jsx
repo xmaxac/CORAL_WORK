@@ -419,7 +419,7 @@ const Profile = () => {
         hideProgressBar: true,
       });
     } finally {
-      window.location.reload();
+      // window.location.reload();
     }
   };
 

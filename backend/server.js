@@ -13,6 +13,8 @@
  */
 
 import express from "express";
+import http from "http";
+import { Server as SocketIO } from "socket.io";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -21,14 +23,20 @@ import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
 import chatbotRouter from "./routes/chatbotRouter.js";
 import detectionRouter from "./routes/detectionRouter.js";
+import chatRouter from "./routes/chatRouter.js";
 import dotenv from "dotenv";
 import axios from "axios";
+import pool from "./database/db.js";
 
 // Load environment variables from .env file
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
+
+// User tracking for real-time communication
+const onlineUsers = new Map();
 
 app.use(helmet());
 
@@ -91,7 +99,7 @@ const globalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: {message: "Too many login attempts. Try again later." }
 })
 
@@ -113,6 +121,7 @@ app.use("/api/auth", authLimiter, authRouter); // Manages user authentication
 app.use("/api/user", userRouter); // Handles user-related operations
 app.use("/api/chatbot", chatbotRouter); // Provides chatbot services
 app.use("/api/detection", detectionRouter); // Manages detection-related processes
+app.use("/api/chat", chatRouter);
 
 /**
  * Fetch latest marine conservation news
@@ -140,6 +149,117 @@ app.get("/", (req, res) => {
  * Start the Express server
  * The server listens on the specified port and logs its status.
  */
-app.listen(PORT, async () => {
+const io = new SocketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+server.listen(PORT, () => {
   console.log(`Server Started on http://localhost:${PORT}`);
+});
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  socket.on("register", (userId) => {
+    if (!userId) return;
+
+      onlineUsers.set(userId);
+      socket.userId = userId;
+
+    if (userId) {
+      // Clean up any previous socket connections for this user
+      for (const [existingUserId, socketId] of onlineUsers.entries()) {
+        if (existingUserId === userId && socketId !== socket.id) {
+          onlineUsers.delete(existingUserId);
+        }
+      }
+
+      io.emit('userConnected', userId);
+    
+      socket.emit('onlineUsers', Array.from(onlineUsers));
+      
+      onlineUsers.set(userId, socket.id);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
+      console.log("Current online users:", Array.from(onlineUsers.entries()));
+    }
+  });
+
+  socket.on("sendMessage", async ({ sender_id, recipient_id, content }) => {
+    try {
+      console.log("Message received:", { sender_id, recipient_id, content });
+      
+      // Save message to database
+      const result = await pool.query(
+        'INSERT INTO messages (sender_id, recipient_id, content, read) VALUES ($1, $2, $3, FALSE) RETURNING *',
+        [sender_id, recipient_id, content] 
+      );
+
+      const message = result.rows[0];
+      console.log("Message saved:", message);
+
+      // Send message to recipient if online
+      const recipientSocket = onlineUsers.get(recipient_id);
+      if (recipientSocket) {
+        console.log(`Sending message to recipient socket: ${recipientSocket}`);
+        io.to(recipientSocket).emit("receiveMessage", { message });
+      }
+      
+      // Also send back to sender to confirm it was sent
+      const senderSocket = onlineUsers.get(sender_id);
+      if (senderSocket && senderSocket !== socket.id) {
+        console.log(`Sending confirmation to sender socket: ${senderSocket}`);
+        io.to(senderSocket).emit("receiveMessage", { message });
+      }
+    } catch (e) {
+      console.error("Socket sendMessage failed:", e);
+      socket.emit("messageError", { error: "Failed to send message" });
+    }
+  });
+
+  socket.on("typing", ({ fromUserId, toUserId }) => {
+    try {
+      console.log(`User ${fromUserId} is typing to ${toUserId}`);
+      const recipientSocket = onlineUsers.get(toUserId);
+      if (recipientSocket) {
+        io.to(recipientSocket).emit("typing", { fromUserId });
+      }
+    } catch (e) {
+      console.error("Socket typing notification failed:", e);
+    }
+  });
+
+  socket.on("markRead", async ({ reader_id, sender_id }) => {
+    try {
+      console.log(`Reader ${reader_id} is marking messages from ${sender_id} as read`);
+      
+      // Update database to mark messages as read
+      await pool.query(
+        'UPDATE messages SET read = TRUE WHERE sender_id = $1 AND recipient_id = $2 AND read = FALSE',
+        [sender_id, reader_id]
+      );
+      
+      // Notify sender that messages were read
+      const senderSocket = onlineUsers.get(sender_id);
+      if (senderSocket) {
+        io.to(senderSocket).emit("readReceipt", { reader_id, sender_id });
+      }
+    } catch (e) {
+      console.error("Socket markRead failed:", e);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    // Find user ID associated with this socket
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        console.log(`User ${userId} disconnected`);
+        onlineUsers.delete(userId);
+        io.emit("userDisconnected", userId);
+        break;
+      }
+    }
+  });
 });

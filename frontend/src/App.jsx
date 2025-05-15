@@ -8,7 +8,7 @@
  * - Displaying a persistent chat button in the bottom-right corner
  */
 
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useContext} from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import DataPage from './pages/DataPage/DataPage'
 import NewReport from './pages/NewReport/NewReport'
@@ -24,6 +24,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {X, MessageSquare, Lock} from 'lucide-react'
 import Reference from './pages/Info/Reference'
+import { AppContext } from './context/AppContext'
+import ChatPage from './pages/Chat/ChatPage'
 
 const DeveloperAccessPopup = ({ onValidAccess }) => {
   const [accessCode, setAccessCode] = useState('');
@@ -87,6 +89,7 @@ const App = () => {
   const [showLogin, setShowLogin] = useState(false)
   const [showChatbot, setShowChatbot] = useState(false)
   const [hasAccess, setHasAccess] = useState(false);
+  const {user} = useContext(AppContext)
   
   // Check for developer access on initial load
   useEffect(() => {
@@ -127,13 +130,16 @@ const App = () => {
         <Route path='/profile/:username' element={<Profile/>}/>
         <Route path='/detection' element={<PhotoDetection/>}/>
         <Route path='/refrences' element={<Reference/>}/>
+        <Route path='/chat' element={<ChatPage currentUserId={user?.id}/>}/>
       </Routes>
       <div>
-        <button className='z-[1000] fixed bottom-3 right-[15px] border border-none h-[50px] w-[50px] flex flex-col cursor-pointer rounded-[50%] bg-blue-500 items-center justify-center' onClick={() => setShowChatbot(!showChatbot)}>
+        {location.pathname === '/chat' ? (
+          null
+        ): <button className='z-[1000] fixed bottom-3 right-[15px] border border-none h-[50px] w-[50px] flex flex-col cursor-pointer rounded-[50%] bg-blue-500 items-center justify-center' onClick={() => setShowChatbot(!showChatbot)}>
           <span className='absolute text-white'>
             {!showChatbot ? <MessageSquare/> : <X/>}
           </span>
-        </button>
+        </button>}
       </div>
     </div>
   )

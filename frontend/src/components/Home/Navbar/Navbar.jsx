@@ -8,7 +8,7 @@ import {
   UserIcon,
   LogoutIcon,
   AcademicCapIcon,
-  CameraIcon
+  CameraIcon,
 } from "@heroicons/react/solid";
 import { AppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,10 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { Bot, MessageSquare } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import LanguageDropdown from "../Language/LanguageDropdown";
+import ChatbotPopup from '../ChatBotPopup/ChatbotPopup'
 
 
 const Navbar = ({ setShowLogin }) => {
@@ -32,6 +34,7 @@ const Navbar = ({ setShowLogin }) => {
   const location = useLocation();
   const { token, setToken, user } = useContext(AppContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false)
 
   const {t} = useTranslation();
 
@@ -130,7 +133,7 @@ const Navbar = ({ setShowLogin }) => {
                         <AvatarImage src={user.profile_image} alt="Profile" />
                         <AvatarFallback>{user.username[0]}</AvatarFallback>
                       </Avatar>
-                    ): (
+                    ) : (
                       <Avatar className="w-9 h-9">
                         <AvatarImage src="/avatar-placeholder.png" alt="Default"/>
                       </Avatar>
@@ -142,6 +145,18 @@ const Navbar = ({ setShowLogin }) => {
                     <UserIcon className="w-4 h-4 mr-2" />
                     {t('home.buttons.profile')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`/chat`)}>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Messages
+                  </DropdownMenuItem>
+                  {location.pathname === '/chat' ? (
+                    <DropdownMenuItem onClick={() => setShowChatbot(true)}>
+                      <Bot className="w-4 h-4 mr-2" />
+                      Chatbot
+                    </DropdownMenuItem>
+                  ) : (
+                    null
+                  )}
                   <DropdownMenuItem onClick={logout}>
                     <LogoutIcon className="w-4 h-4 mr-2" />
                     {t('home.buttons.logout')}
@@ -192,6 +207,7 @@ const Navbar = ({ setShowLogin }) => {
           </div>
         </div>
       )}
+      {showChatbot?<ChatbotPopup setShowChatbot={setShowChatbot}/>:<></>}
     </nav>
   );
 };
