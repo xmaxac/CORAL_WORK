@@ -1,4 +1,3 @@
-LICENSE
 pyproject.toml
 tests/test_cli.py
 tests/test_cuda.py
