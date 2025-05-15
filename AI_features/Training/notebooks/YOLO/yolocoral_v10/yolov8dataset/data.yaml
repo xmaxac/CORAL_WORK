@@ -1,0 +1,12 @@
+names:
+- Coral
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: coral-detector
+  url: https://universe.roboflow.com/coralbase/coral-detector/dataset/4
+  version: 4
+  workspace: coralbase
+test: F:\Qianyu JOB\TSA_2025\CORAL_WORK\AI_features\Training\notebooks\YOLO\yolocoral_v10\yolov8dataset\test\images
+train: F:\Qianyu JOB\TSA_2025\CORAL_WORK\AI_features\Training\notebooks\YOLO\yolocoral_v10\yolov8dataset\train\images
+val: F:\Qianyu JOB\TSA_2025\CORAL_WORK\AI_features\Training\notebooks\YOLO\yolocoral_v10\yolov8dataset\valid\images
