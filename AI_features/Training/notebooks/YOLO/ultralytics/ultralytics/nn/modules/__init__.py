@@ -16,7 +16,9 @@ Examples:
     >>> torch.onnx.export(m, x, f)
     >>> os.system(f"onnxslim {f} {f} && open {f}")  # pip install onnxslim
 """
-
+from .new_block import (
+    C2f_MPFB
+)
 from .block import (
     C1,
     C2,
@@ -103,6 +105,7 @@ from .transformer import (
 )
 
 __all__ = (
+    "C2f_MPFB",
     "Conv",
     "Conv2",
     "LightConv",

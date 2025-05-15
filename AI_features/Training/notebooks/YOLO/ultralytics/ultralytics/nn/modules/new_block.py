@@ -6,11 +6,11 @@ import torch.nn.functional as F
 import numpy as np
 
 from ..modules.conv import Conv,  autopad
-from block import * 
+from .block import Bottleneck, C2f
 
 
 
-__all__ = ['C2f_MPFB','GSConv','VoVGSCSP']
+__all__ = ['C2f_MPFB']
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     """Pad to 'same' shape outputs."""
@@ -39,6 +39,8 @@ class Conv(nn.Module):
     def forward_fuse(self, x):
         """Perform transposed convolution of 2D data."""
         return self.act(self.conv(x))
+    
+# *****************************************************************************************************
 
 def transI_fusebn(kernel, bn):
     gamma = bn.weight
