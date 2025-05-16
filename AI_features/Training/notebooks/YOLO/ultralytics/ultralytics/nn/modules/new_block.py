@@ -454,11 +454,7 @@ class GSConv(nn.Module):
         print(f"[GSConv 0] After reshaping: {y[0].shape}")
         print(f"[GSConv 1] After reshaping: {y[1].shape}")
 
-
-
         return torch.cat((y[0], y[1]), 1)
-
-
 
 
 class GSBottleneck(nn.Module):
