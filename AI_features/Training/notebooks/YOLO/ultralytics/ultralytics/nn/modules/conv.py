@@ -678,6 +678,8 @@ class Concat(nn.Module):
         Returns:
             (torch.Tensor): Concatenated tensor.
         """
+        for i, t in enumerate(x):
+            print(f"[Concat] Input {i} shape: {t.shape}")
         return torch.cat(x, self.d)
 
 

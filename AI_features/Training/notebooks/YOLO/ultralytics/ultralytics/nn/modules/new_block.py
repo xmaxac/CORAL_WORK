@@ -10,7 +10,7 @@ from .block import Bottleneck, C2f
 
 
 
-__all__ = ['C2f_MPFB']
+__all__ = ['C2f_MPFB', 'GSConv', 'VoVGSCSP']
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     """Pad to 'same' shape outputs."""
@@ -413,61 +413,79 @@ class C2f_MPFB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(Bottleneck_MPFB(self.c, self.c, shortcut, g, k=(3, 3), e=1.0) for _ in range(n))
-        
-        
-        
+    
+
+def check_shapes(tensors, dim=1):
+    sizes = [list(t.shape) for t in tensors]
+    for i, size in enumerate(sizes[1:], start=1):
+        for d in range(len(size)):
+            if d != dim and size[d] != sizes[0][d]:
+                print(f"Mismatch in tensor {i} at dim {d}: {size[d]} != {sizes[0][d]}")
+                return False
+    return True
 
 # # ********************** Lightweight Neck ******************
-# class GSConv(nn.Module):
+class GSConv(nn.Module):
 
-#     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
-#         super().__init__()
-#         c_ = c2 // 2
-#         self.cv1 = Conv(c1, c_, k, s, p, g, d, Conv.default_act)
-#         self.cv2 = Conv(c_, c_, 5, 1, p, c_, d, Conv.default_act)
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        c_ = c2 // 2
+        self.cv1 = Conv(c1, c_, k, s, p, g, d, Conv.default_act)
+        self.cv2 = Conv(c_, c_, 5, 1, p, c_, d, Conv.default_act)
 
-#     def forward(self, x):
-#         x1 = self.cv1(x)
-#         x2 = torch.cat((x1, self.cv2(x1)), 1)
-#         # shuffle
-#         # y = x2.reshape(x2.shape[0], 2, x2.shape[1] // 2, x2.shape[2], x2.shape[3])
-#         # y = y.permute(0, 2, 1, 3, 4)
-#         # return y.reshape(y.shape[0], -1, y.shape[3], y.shape[4])
+    def forward(self, x):
+        print(f"[GSConv] Input shape: {x.shape}")
+        x1 = self.cv1(x)
+        print(f"[GSConv] After cv1 shape: {x1.shape}")
+        x2 = torch.cat((x1, self.cv2(x1)), 1)
+        print(f"[GSConv] After cv2 shape: {x2.shape}")
 
-#         b, n, h, w = x2.size()
-#         b_n = b * n // 2
-#         y = x2.reshape(b_n, 2, h * w)
-#         y = y.permute(1, 0, 2)
-#         y = y.reshape(2, -1, n // 2, h, w)
+        # shuffle
+        # y = x2.reshape(x2.shape[0], 2, x2.shape[1] // 2, x2.shape[2], x2.shape[3])
+        # y = y.permute(0, 2, 1, 3, 4)
+        # return y.reshape(y.shape[0], -1, y.shape[3], y.shape[4])
 
-#         return torch.cat((y[0], y[1]), 1)
+        b, n, h, w = x2.size() # batch size, number of channels, height, width
+        b_n = b * n // 2
+        y = x2.reshape(b_n, 2, h * w)
+        y = y.permute(1, 0, 2)
+        y = y.reshape(2, -1, n // 2, h, w)
 
-# class GSBottleneck(nn.Module):
+        print(f"[GSConv 0] After reshaping: {y[0].shape}")
+        print(f"[GSConv 1] After reshaping: {y[1].shape}")
 
-#     def __init__(self, c1, c2, k=3, s=1, e=0.5):
-#         super().__init__()
-#         c_ = int(c2*e)
-#         # for lighting
-#         self.conv_lighting = nn.Sequential(
-#             GSConv(c1, c_, 1, 1),
-#             GSConv(c_, c2, 3, 1, act=False))
-#         self.shortcut = Conv(c1, c2, 1, 1, act=False)
 
-#     def forward(self, x):
-#         return self.conv_lighting(x) + self.shortcut(x)
 
-# class VoVGSCSP(nn.Module):
-#     # VoVGSCSP module with GSBottleneck
-#     def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
-#         super().__init__()
-#         c_ = int(c2 * e)  # hidden channels
-#         self.cv1 = Conv(c1, c_, 1, 1)
-#         self.cv2 = Conv(c1, c_, 1, 1)
-#         self.gsb = nn.Sequential(*(GSBottleneck(c_, c_, e=1.0) for _ in range(n)))
-#         self.res = Conv(c_, c_, 3, 1, act=False)
-#         self.cv3 = Conv(2 * c_, c2, 1)
+        return torch.cat((y[0], y[1]), 1)
 
-#     def forward(self, x):
-#         x1 = self.gsb(self.cv1(x))
-#         y = self.cv2(x)
-#         return self.cv3(torch.cat((y, x1), dim=1))
+
+
+
+class GSBottleneck(nn.Module):
+    def __init__(self, c1, c2, k=3, s=1, e=0.5):
+        super().__init__()
+        c_ = int(c2*e)
+        # for lighting
+        self.conv_lighting = nn.Sequential(
+            GSConv(c1, c_, 1, 1),
+            GSConv(c_, c2, 3, 1, act=False))
+        self.shortcut = Conv(c1, c2, 1, 1, act=False)
+
+    def forward(self, x):
+        return self.conv_lighting(x) + self.shortcut(x)
+
+class VoVGSCSP(nn.Module):
+    # VoVGSCSP module with GSBottleneck
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = Conv(c1, c_, 1, 1)
+        self.gsb = nn.Sequential(*(GSBottleneck(c_, c_, e=1.0) for _ in range(n)))
+        self.res = Conv(c_, c_, 3, 1, act=False)
+        self.cv3 = Conv(2 * c_, c2, 1)
+
+    def forward(self, x):
+        x1 = self.gsb(self.cv1(x))
+        y = self.cv2(x)
+        return self.cv3(torch.cat((y, x1), dim=1))

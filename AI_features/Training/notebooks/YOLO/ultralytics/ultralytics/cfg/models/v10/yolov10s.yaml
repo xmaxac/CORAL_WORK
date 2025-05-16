@@ -10,6 +10,7 @@ scales: # model compound scaling constants, i.e. 'model=yolov10n.yaml' will call
   # [depth, width, max_channels]
   s: [0.33, 0.50, 1024]
 
+
 backbone:
   # [from, repeats, module, args]
   - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2

@@ -16,8 +16,12 @@ Examples:
     >>> torch.onnx.export(m, x, f)
     >>> os.system(f"onnxslim {f} {f} && open {f}")  # pip install onnxslim
 """
+
+# new backbone and head block
 from .new_block import (
-    C2f_MPFB
+    C2f_MPFB, 
+    GSConv, 
+    VoVGSCSP
 )
 from .block import (
     C1,
@@ -106,6 +110,8 @@ from .transformer import (
 
 __all__ = (
     "C2f_MPFB",
+    "GSConv", 
+    "VoVGSCSP",
     "Conv",
     "Conv2",
     "LightConv",

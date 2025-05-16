@@ -6,7 +6,7 @@ import re
 import types
 from copy import deepcopy
 from pathlib import Path
-from .modules.new_block import C2f_MPFB
+from .modules.new_block import C2f_MPFB, GSConv, VoVGSCSP
 
 import torch
 import torch.nn as nn
@@ -69,7 +69,9 @@ from ultralytics.nn.modules import (
     YOLOEDetect,
     YOLOESegment,
     v10Detect,
-    C2f_MPFB
+    C2f_MPFB, # new blocks here
+    GSConv,
+    VoVGSCSP
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1377,7 +1379,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
-            C2f_MPFB,
+            C2f_MPFB, # new blocks here
+            GSConv,
+            VoVGSCSP,
             Classify,
             Conv,
             ConvTranspose,
@@ -1417,6 +1421,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     repeat_modules = frozenset(  # modules with 'repeat' arguments
         {
             C2f_MPFB,
+            GSConv, 
+            VoVGSCSP,
             BottleneckCSP,
             C1,
             C2,
