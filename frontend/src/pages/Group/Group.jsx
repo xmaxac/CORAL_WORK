@@ -110,60 +110,58 @@ const Group = () => {
         <p>No groups found.</p>
       ) : (
         <div className="space-y-4">
-          {groups.map((group) => (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {groups.map((group) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groups.map((group) => (
+              <div
+                key={group.id}
+                className="border rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow duration-200 overflow-hidden"
+              >
                 <div
-                  key={group.id}
-                  className="border rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow duration-200 overflow-hidden"
-                >
-                  <div
-                    className="h-24 bg-gradient-to-r from-blue-500 to-purple-600"
-                    onClick={() => navigate(`/groups/${group.id}`)}
-                  ></div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h2
-                        className="text-xl font-semibold cursor-pointer hover:text-blue-600 transition-colors"
-                        onClick={() => navigate(`/groups/${group.id}`)}
-                      >
-                        {group.name}
-                      </h2>
-                      {group?.created_by === profile?.id && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Delete Group"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteGroup(group.id);
-                          }}
-                          className="text-gray-500 hover:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-gray-700 mt-2 line-clamp-2">
-                      {group.description}
-                    </p>
-                    <div className="mt-4 flex justify-between items-center">
-                      <span className="text-sm text-gray-500">
-                        Reports: {group.report_count || 0}
-                      </span>
+                  className="h-24 bg-gradient-to-r from-blue-500 to-purple-600"
+                  onClick={() => navigate(`/groups/${group.id}`)}
+                ></div>
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <h2
+                      className="text-xl font-semibold cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => navigate(`/groups/${group.id}`)}
+                    >
+                      {group.name}
+                    </h2>
+                    {group?.created_by === profile?.id && (
                       <Button
                         variant="ghost"
-                        className="text-blue-600 hover:text-blue-800"
-                        onClick={() => navigate(`/group/${group.id}`)}
+                        size="icon"
+                        aria-label="Delete Group"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGroup(group.id);
+                        }}
+                        className="text-gray-500 hover:text-red-500"
                       >
-                        View Group
+                        <Trash2 className="w-4 h-4" />
                       </Button>
-                    </div>
+                    )}
+                  </div>
+                  <p className="text-gray-700 mt-2 line-clamp-2">
+                    {group.description}
+                  </p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      Reports: {group.report_count || 0}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      className="text-blue-600 hover:text-blue-800"
+                      onClick={() => navigate(`/group/${group.id}`)}
+                    >
+                      View Group
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {showPopup && (

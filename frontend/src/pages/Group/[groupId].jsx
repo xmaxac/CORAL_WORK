@@ -66,10 +66,10 @@ const GroupReportsPage = () => {
                   <span>{reports?.length || 0} Reports</span>
                 </div>
                 <Link
-                  to="/community"
+                  to="/group"
                   className="text-white hover:underline flex items-center gap-1"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Back to Community
+                  <ChevronLeft className="w-4 h-4" /> Back to Groups
                 </Link>
               </div>
             </div>
@@ -81,10 +81,10 @@ const GroupReportsPage = () => {
                 No reports found in this group.
               </p>
               <Link
-                to="/community"
+                to="/group"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
               >
-                Back to Community
+                Back to Groups
               </Link>
             </div>
           ) : (
