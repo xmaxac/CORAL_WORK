@@ -172,6 +172,10 @@ export const createReport = async (req, res) => {
     );
     const reportId = reportResult.rows[0].id;
 
+    // Store photo IDs in an array to match with detections later
+    const photoIds = [];
+
+    // Process regular images first
     if (req.files && Array.isArray(req.files.images)) {
       for (const file of req.files.images) {
         const imageUrl = await processImageUpload(
@@ -181,10 +185,35 @@ export const createReport = async (req, res) => {
           file.mimetype
         );
 
-        await client.query(
-          `INSERT INTO report_photos (photo_url, report_id) VALUES ($1, $2)`,
+        // Insert the photo and store its ID
+        const photoResult = await client.query(
+          `INSERT INTO report_photos (photo_url, report_id) VALUES ($1, $2) RETURNING id`,
           [imageUrl, reportId]
         );
+        
+        photoIds.push(photoResult.rows[0].id);
+      }
+    }
+
+    // Process detection images - using photoIds array to match with original photos
+    if (req.files && Array.isArray(req.files.imageDetections)) {
+      for (let i = 0; i < req.files.imageDetections.length; i++) {
+        // Make sure we don't go out of bounds of the photoIds array
+        if (i < photoIds.length) {
+          const file = req.files.imageDetections[i];
+          const imageUrl = await processImageUpload(
+            file.buffer,
+            null,
+            reportId,
+            file.mimetype
+          );
+
+          // Update the specific photo record using its ID
+          await client.query(
+            "UPDATE report_photos SET photo_detection = $1 WHERE id = $2",
+            [imageUrl, photoIds[i]]
+          );
+        }
       }
     }
 
@@ -224,7 +253,7 @@ export const createReport = async (req, res) => {
     ]);
 
     const completeReport = await client.query(
-      `SELECT r.*, array_agg(rp.photo_url) as photos,
+      `SELECT r.*, json_agg(DISTINCT jsonb_build_object('photo_url', rp.photo_url, 'photo_detection', rp.photo_detection)) as photos,
       COALESCE(
         json_agg(
           DISTINCT jsonb_build_object(
@@ -272,11 +301,13 @@ export const createReport = async (req, res) => {
         average_depth: averageDepth,
         water_temp: waterTemp,
         group_id: group_id,
-        photos: completeReport.rows[0].photos.filter((url) => url !== null),
+        photos: completeReport.rows[0].photos.filter((photo) => photo !== null && photo.photo_url !== null),
         documents: completeReport.rows[0].documents.filter(
-          (url) => url !== null
+          (doc) => doc !== null && doc.s3_url !== null
         ),
-        videos: completeReport.rows[0].videos.filter((url) => url !== null),
+        videos: completeReport.rows[0].videos.filter(
+          (video) => video !== null && video.s3_url !== null
+        ),
       },
     });
   } catch (e) {
@@ -617,95 +648,143 @@ export const likeUnlikeReport = async (req, res) => {
 export const getAllReports = async (req, res) => {
   const client = await pool.connect();
   try {
+    // First, get all reports with their basic information
     const reports = await client.query(
       `
         SELECT 
           r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id,
           u.username, u.profile_image, u.name,
-          c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
-          cu.username AS comment_username, cu.profile_image AS comment_profile_image, cu.name AS comment_name,
-          COALESCE(likes_count.likes, 0) AS likes,
-          array_agg(rp.photo_url) AS report_photo_urls,
-          COALESCE(
-            json_agg(
-              DISTINCT jsonb_build_object(
-                'file_name', rd.file_name,
-                'file_type', rd.file_type,
-                's3_url', rd.s3_url
-              )
-          ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS documents,
-          COALESCE(
-            json_agg(
-              DISTINCT jsonb_build_object(
-                'file_name', rv.file_name,
-                'file_type', rv.file_type,
-                's3_url', rv.s3_url
-              )
-          ) FILTER (WHERE rv.id IS NOT NULL), '[]') AS videos
+          COALESCE(likes_count.likes, 0) AS likes
         FROM reports r
         JOIN users u ON r.user_id = u.id
-        LEFT JOIN report_comments c ON r.id = c.report_id
-        LEFT JOIN users cu ON c.user_id = cu.id
         LEFT JOIN (
           SELECT report_id, COUNT(*) AS likes
           FROM report_likes
           GROUP BY report_id
         ) likes_count ON r.id = likes_count.report_id
-        LEFT JOIN report_photos rp ON r.id = rp.report_id
-        LEFT JOIN report_documents rd ON r.id = rd.report_id
-        LEFT JOIN report_videos rv ON r.id = rv.report_id
-        GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at, r.group_id,
-                u.username, u.profile_image, u.name,
-                c.id, c.comment, c.user_id,
-                cu.username, cu.profile_image, cu.name, likes_count.likes
-        ORDER BY r.created_at DESC
-      `,
-      []
+        ORDER BY r.created_at DESC;
+      `
     );
 
     const reportsMap = new Map();
 
-    reports.rows.forEach((row) => {
-      if (!reportsMap.has(row.id)) {
-        reportsMap.set(row.id, {
-          id: row.id,
-          group_id: row.group_id,
-          user_id: row.user_id,
-          latitude: row.latitude,
-          longitude: row.longitude,
-          country_code: row.country_code,
-          title: row.title,
-          description: row.description,
-          report_date: row.report_date,
-          created_at: row.created_at,
-          reef_name: row.reef_name,
-          reef_type: row.reef_type,
-          average_depth: row.average_depth,
-          water_temp: row.water_temp,
-          photos: row.report_photo_urls || [],
-          documents: row.documents || [],
-          videos: row.videos || [],
-          user: {
-            username: row.username,
-            profile_image: row.profile_image,
-            name: row.name,
-          },
-          likes: row.likes,
-          comments: [],
-        });
-      }
+    // Process base report data
+    for (const row of reports.rows) {
+      reportsMap.set(row.id, {
+        id: row.id,
+        group_id: row.group_id,
+        user_id: row.user_id,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        country_code: row.country_code,
+        title: row.title,
+        description: row.description,
+        report_date: row.report_date,
+        created_at: row.created_at,
+        reef_name: row.reef_name,
+        reef_type: row.reef_type,
+        average_depth: row.average_depth,
+        water_temp: row.water_temp,
+        user: {
+          username: row.username,
+          profile_image: row.profile_image,
+          name: row.name,
+        },
+        likes: row.likes,
+        photos: [],
+        documents: [],
+        videos: [],
+        comments: [],
+      });
+    }
 
-      if (row.comment_id) {
-        reportsMap.get(row.id).comments.push({
-          id: row.comment_id,
-          text: row.comment_text,
-          user_id: row.comment_user_id,
-          username: row.comment_username,
-          profile_image: row.comment_profile_image,
-          name: row.comment_name,
+    // Get and process photos separately
+    const photosResult = await client.query(
+      `
+      SELECT 
+        report_id, photo_url, photo_detection 
+      FROM report_photos
+      WHERE report_id IN (${Array.from(reportsMap.keys()).map(id => `'${id}'`).join(',')})
+      `
+    );
+    
+    for (const photo of photosResult.rows) {
+      const report = reportsMap.get(photo.report_id);
+      if (report) {
+        report.photos.push({
+          photo_url: photo.photo_url,
+          photo_detection: photo.photo_detection
         });
       }
-    });
+    }
+
+    // Get and process comments
+    const commentsResult = await client.query(
+      `
+      SELECT 
+        c.report_id, c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
+        u.username AS comment_username, u.profile_image AS comment_profile_image, u.name AS comment_name
+      FROM report_comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.report_id IN (${Array.from(reportsMap.keys()).map(id => `'${id}'`).join(',')})
+      `
+    );
+
+    for (const comment of commentsResult.rows) {
+      const report = reportsMap.get(comment.report_id);
+      if (report) {
+        report.comments.push({
+          id: comment.comment_id,
+          text: comment.comment_text,
+          user_id: comment.comment_user_id,
+          username: comment.comment_username,
+          profile_image: comment.comment_profile_image,
+          name: comment.comment_name,
+        });
+      }
+    }
+
+    // Get and process documents
+    const documentsResult = await client.query(
+      `
+      SELECT 
+        report_id, file_name, file_type, s3_url
+      FROM report_documents
+      WHERE report_id IN (${Array.from(reportsMap.keys()).map(id => `'${id}'`).join(',')})
+      `
+    );
+
+    for (const doc of documentsResult.rows) {
+      const report = reportsMap.get(doc.report_id);
+      if (report) {
+        report.documents.push({
+          file_name: doc.file_name,
+          file_type: doc.file_type,
+          s3_url: doc.s3_url
+        });
+      }
+    }
+
+    // Get and process videos
+    const videosResult = await client.query(
+      `
+      SELECT 
+        report_id, file_name, file_type, s3_url
+      FROM report_videos
+      WHERE report_id IN (${Array.from(reportsMap.keys()).map(id => `'${id}'`).join(',')})
+      `
+    );
+
+    for (const video of videosResult.rows) {
+      const report = reportsMap.get(video.report_id);
+      if (report) {
+        report.videos.push({
+          file_name: video.file_name,
+          file_type: video.file_type,
+          s3_url: video.s3_url
+        });
+      }
+    }
 
     res
       .status(200)

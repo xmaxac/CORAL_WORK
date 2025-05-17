@@ -118,13 +118,13 @@ const Group = () => {
               >
                 <div
                   className="h-24 bg-gradient-to-r from-blue-500 to-purple-600"
-                  onClick={() => navigate(`/groups/${group.id}`)}
+                  onClick={() => navigate(`/group/${group.id}`)}
                 ></div>
                 <div className="p-4">
                   <div className="flex items-center justify-between">
                     <h2
                       className="text-xl font-semibold cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => navigate(`/groups/${group.id}`)}
+                      onClick={() => navigate(`/group/${group.id}`)}
                     >
                       {group.name}
                     </h2>

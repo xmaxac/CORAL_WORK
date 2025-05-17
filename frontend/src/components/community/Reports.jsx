@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Map,
+  SearchCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppContext } from "@/context/AppContext";
@@ -39,7 +40,7 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
     reef_type,
     average_depth,
     water_temp,
-    group_id
+    group_id,
   } = report;
   const { username, profile_image, name } = report.user;
   const reportOwnerId = report.user_id;
@@ -47,6 +48,7 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
   const [likesCount, setLikesCount] = useState(Number(likes));
   const isMyPost = reportOwnerId === currentUserId;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDetectionModal, setShowDetectionModal] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [comments, setComments] = useState(report.comments || []);
   const { url, token } = useContext(AppContext);
@@ -146,14 +148,12 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
         );
         setIsLiked(response.data.isLiked);
       } catch (e) {
-        console.error("Error fetching like status", error);
+        console.error("Error fetching like status", e);
       }
     };
 
     fetchLikeStatus();
   }, [report.id, url, token]);
-
-  console.log(report)
 
   return (
     <Card className="w-full max-w-3xl m-5">
@@ -240,12 +240,21 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
         {hasValidPhotos && (
           <div className="space-y-2">
             <div className="relative">
-              <div className="relative aspect-video rounded-lg overflow-hidden">
+              <div className="relative group aspect-video rounded-lg overflow-hidden">
                 <img
-                  src={photos[currentImageIndex]}
+                  src={photos[currentImageIndex].photo_url}
                   alt={`${title} - image ${currentImageIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowDetectionModal(true)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white"
+                >
+                  <SearchCheck className="w-4 h-4" />
+                </Button>
               </div>
 
               {photos.length > 1 && (
@@ -269,7 +278,6 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
                 </>
               )}
             </div>
-
             {photos.length > 1 && (
               <div className="flex gap-2 overflow-x-auto py-2">
                 {photos.map((photo, index) => (
@@ -281,7 +289,7 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
                     onClick={() => selectImage(index)}
                   >
                     <img
-                      src={photo}
+                      src={photo.photo_url}
                       alt={`${title} thumbnail ${index + 1}`}
                       className="w-16 h-16 object-cover"
                     />
@@ -379,6 +387,24 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
           </Button>
         </div>
       </CardFooter>
+      {showDetectionModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-4 max-w-3xl w-full relative">
+            <button
+              onClick={() => setShowDetectionModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-semibold mb-4">AI Detection</h2>
+            <img
+              src={photos[currentImageIndex].photo_detection} // You need to pass this prop or state
+              alt="AI Detection"
+              className="w-full h-auto rounded"
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

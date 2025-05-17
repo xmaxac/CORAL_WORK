@@ -141,7 +141,7 @@ const Community = () => {
       }
     };
     fetchData();
-  }, [token])
+  }, [token]);
 
   // Function to remove a report from the displayed list when deleted
   const handleDelete = (reportId) => {
@@ -156,7 +156,7 @@ const Community = () => {
     });
 
     return countryName;
-  }
+  };
 
   return (
     <>
@@ -189,7 +189,10 @@ const Community = () => {
                 ))}
               </select>
             </div>
-            <Link to="/group" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+            <Link
+              to="/group"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+            >
               <MessageSquare className="w-4 h-4 mr-2" />
               View Groups
             </Link>
@@ -205,17 +208,26 @@ const Community = () => {
             <div className="flex justify-between px-6">
               {/* Main content area with reports */}
               <div>
-                {groups.map((group) => (
-                  REPORTS.filter((report) => selectedCountry === "All" || report.country_code?.trim() === selectedCountry).map((report) => (
+                {REPORTS.filter(
+                  (report) =>
+                    selectedCountry === "All" ||
+                    report.country_code?.trim() === selectedCountry
+                ).map((report) => {
+                  // Find the group that this report belongs to
+                  const matchingGroup = groups.find(
+                    (group) => group.id === report.group_id
+                  ) || { id: null, name: "Unknown Group" };
+
+                  return (
                     <Reports
                       key={report.id}
                       report={report}
-                      currentUserId={user?.id} // Pass current user ID to enable delete function for own reports
+                      currentUserId={user?.id}
                       onDelete={handleDelete}
-                      group={group}
+                      group={matchingGroup}
                     />
-                  ))
-                ))}
+                  );
+                })}
               </div>
 
               {/* Sidebar showing latest news */}
