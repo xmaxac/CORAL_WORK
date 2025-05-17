@@ -1,3 +1,10 @@
 {
-  "cSpell.words": ["kfra", "maxca", "SCTLD", "uuidv", "uvicorn"]
+  "cSpell.words": [
+    "kfra",
+    "maxca",
+    "SCTLD",
+    "uuidv",
+    "uvicorn"
+  ],
+  "postman.settings.dotenv-detection-notification-visibility": false
 }

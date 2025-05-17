@@ -20,12 +20,14 @@ import ChatbotPopup from './components/Home/ChatBotPopup/ChatbotPopup'
 import Profile from './pages/Profile/Profile'
 import Info from './pages/Info/Info'
 import PhotoDetection from './pages/PhotoDetection/PhotoDetection'
+import Group from './pages/Group/Group'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {X, MessageSquare, Lock} from 'lucide-react'
 import Reference from './pages/Info/Reference'
 import { AppContext } from './context/AppContext'
 import ChatPage from './pages/Chat/ChatPage'
+import GroupReportsPage from './pages/Group/[groupId]'
 
 const DeveloperAccessPopup = ({ onValidAccess }) => {
   const [accessCode, setAccessCode] = useState('');
@@ -131,6 +133,8 @@ const App = () => {
         <Route path='/detection' element={<PhotoDetection/>}/>
         <Route path='/refrences' element={<Reference/>}/>
         <Route path='/chat' element={<ChatPage currentUserId={user?.id}/>}/>
+        <Route path='/group' element={<Group />}/>
+        <Route path="/group/:groupId" element={<GroupReportsPage />} />
       </Routes>
       <div>
         {location.pathname === '/chat' ? (

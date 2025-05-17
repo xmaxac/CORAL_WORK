@@ -106,6 +106,17 @@ const NewReport = () => {
   // Access application-wide data like authentication token
   const { token } = useContext(AppContext);
 
+  // State to store selected images and image previews
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [selectedDocs, setSelectedDocs] = useState([]);
+  const [selectedVids, setSelectedVids] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const imageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+
   // State to store form data
   const [data, setData] = useState({
     title: "",
@@ -119,15 +130,6 @@ const NewReport = () => {
     averageDepth: "",
     waterTemp: "",
   });
-
-  // State to store selected images and image previews
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [selectedDocs, setSelectedDocs] = useState([]);
-  const [selectedVids, setSelectedVids] = useState([]);
-  const imageInputRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const videoInputRef = useRef(null);
 
   //State to store AI detection of images
   const [ImageDetections, setImageDetections] = useState([]);
@@ -167,6 +169,23 @@ const NewReport = () => {
       );
     }
   }, []);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const response = await axios.get(`${url}/api/groups/all`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+        });
+        const data = response.data;
+        setGroups(data)
+      } catch (e) {
+        console.error("Failed to load groups", e)
+      }
+    }
+    fetchGroups();
+  }, [])
 
   const handleMapClick = (event) => {
     // Get the latitude and longitude of the clicked location on the map
@@ -384,8 +403,9 @@ const NewReport = () => {
 
       selectedVids.forEach((vid) => {
         formData.append("videos", vid.file);
-        console.log(vid)
       })
+
+      formData.append("group_id", selectedGroupId)
 
       const moderateResponse = await axios.post(`${url}/api/report/moderate`, formData, {
         headers: {
@@ -426,6 +446,7 @@ const NewReport = () => {
           setImagePreviews([]);
           setSelectedDocs([]);
           setSelectedVids([]);
+          setSelectedGroupId(null);
           if (imageInputRef.current) {
             imageInputRef.current.value = "";
           }
@@ -903,6 +924,23 @@ const NewReport = () => {
                               </div>
                             )}
                           </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="groups">
+                              Group (optional)
+                            </Label>
+                            <select
+                              value={selectedGroupId}
+                              onChange={(e) => setSelectedGroupId(e.target.value)}
+                              className="w-full border rounded px-3 py-2 mb-4"
+                            >
+                              <option value="">No group</option>
+                              {groups?.map((group) => (
+                                <option key={group.id} value={group.id}>
+                                  {group.name}
+                                </option>
+                              ))}
+                            </select>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="description">

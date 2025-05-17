@@ -45,6 +45,15 @@ CREATE TABLE reports (
 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT now()
+);
+
+
 CREATE TABLE report_likes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     report_id UUID REFERENCES reports(id) ON DELETE CASCADE,

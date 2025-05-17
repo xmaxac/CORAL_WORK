@@ -58,8 +58,8 @@ const processDocumentUpload = async (file, reportId) => {
 const processVideoUpload = async (file, reportId) => {
   if (!file || !file.buffer) throw new Error("No video buffer found.");
 
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'video-upload-'));
-  const inputPath = path.join(tmpDir, 'input.mp4');
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "video-upload-"));
+  const inputPath = path.join(tmpDir, "input.mp4");
   const outputPath = path.join(tmpDir, "output.mp4");
 
   try {
@@ -67,43 +67,50 @@ const processVideoUpload = async (file, reportId) => {
 
     await new Promise((resolve, reject) => {
       ffmpeg(inputPath)
-        .inputOptions('-fflags +genpts')
+        .inputOptions("-fflags +genpts")
         .outputOptions([
-          '-vcodec libx264',
-          '-acodec copy', 
-          '-preset fast',
-          '-crf 23',
-          '-analyzeduration 100M',
-          '-strict experimental', 
-          '-probesize 100M',        
-          '-max_muxing_queue_size 1024',
-          '-r 30',
-          '-async 1',
+          "-vcodec libx264",
+          "-acodec copy",
+          "-preset fast",
+          "-crf 23",
+          "-analyzeduration 100M",
+          "-strict experimental",
+          "-probesize 100M",
+          "-max_muxing_queue_size 1024",
+          "-r 30",
+          "-async 1",
         ])
-        .on('start', cmd => console.log('FFmpeg started:', cmd))
-        .on('error', e => {
-          console.error('FFmpeg error:', e.message);
-          reject(new Error('Failed to process video'));
+        .on("start", (cmd) => console.log("FFmpeg started:", cmd))
+        .on("error", (e) => {
+          console.error("FFmpeg error:", e.message);
+          reject(new Error("Failed to process video"));
         })
-        .on('end', resolve)
+        .on("end", resolve)
         .save(outputPath);
     });
 
     const finalBuffer = await fs.readFile(outputPath);
-    const fileName = `${reportId}-${file.originalname.replace(/\.[^/.]+$/, '')}.mp4`;
-    const videoUrl = await uploadToS3(finalBuffer, `reports/${reportId}/videos`, fileName, 'video/mp4');
+    const fileName = `${reportId}-${file.originalname.replace(
+      /\.[^/.]+$/,
+      ""
+    )}.mp4`;
+    const videoUrl = uploadToS3(
+      finalBuffer,
+      `reports/${reportId}/videos`,
+      fileName,
+      "video/mp4"
+    );
 
     return videoUrl;
   } finally {
     try {
       await fs.unlink(inputPath).catch(() => {});
       await fs.unlink(outputPath).catch(() => {});
-      await fs.rm(tmpDir, { recursive: true, force: true});
+      await fs.rm(tmpDir, { recursive: true, force: true });
     } catch (cleanupE) {
-      console.warn('Temp file cleanup failed:', cleanupE);
-    } 
+      console.warn("Temp file cleanup failed:", cleanupE);
+    }
   }
-
 };
 
 export const createReport = async (req, res) => {
@@ -123,6 +130,7 @@ export const createReport = async (req, res) => {
       reefType,
       averageDepth,
       waterTemp,
+      group_id,
     } = req.body;
     const userId = req.user.id;
 
@@ -136,18 +144,16 @@ export const createReport = async (req, res) => {
     }
 
     if (!description || !latitude || !longitude || !countryCode || !title) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Please fill in all required fields",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Please fill in all required fields",
+      });
     }
 
     const reportResult = await client.query(
       `INSERT INTO reports
-      (user_id, title, latitude, longitude, country_code, description, report_date, reef_name, reef_type, average_depth, water_temp)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      (user_id, title, latitude, longitude, country_code, description, report_date, reef_name, reef_type, average_depth, water_temp, group_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING id`,
       [
         userId,
@@ -161,6 +167,7 @@ export const createReport = async (req, res) => {
         reefType,
         averageDepth,
         waterTemp,
+        group_id,
       ]
     );
     const reportId = reportResult.rows[0].id;
@@ -202,6 +209,19 @@ export const createReport = async (req, res) => {
         );
       }
     }
+
+    const countResult = await client.query(
+      "SELECT COUNT(*) FROM reports WHERE group_id = $1",
+      [group_id]
+    );
+
+    const count = parseInt(countResult.rows[0].count);
+
+    // Update the group's report_count
+    await client.query("UPDATE groups SET report_count = $1 WHERE id = $2", [
+      count,
+      group_id,
+    ]);
 
     const completeReport = await client.query(
       `SELECT r.*, array_agg(rp.photo_url) as photos,
@@ -251,6 +271,7 @@ export const createReport = async (req, res) => {
         reef_type: reefType,
         average_depth: averageDepth,
         water_temp: waterTemp,
+        group_id: group_id,
         photos: completeReport.rows[0].photos.filter((url) => url !== null),
         documents: completeReport.rows[0].documents.filter(
           (url) => url !== null
@@ -448,12 +469,10 @@ export const deleteReport = async (req, res) => {
     }
 
     if (userId !== report.rows[0].user_id) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "You are not authorized to delete this report",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "You are not authorized to delete this report",
+      });
     }
 
     if (report.rows[0].photo_url) {
@@ -513,17 +532,15 @@ export const commentOnReport = async (req, res) => {
     // await deleteCacheByPattern('latestReports:*');
     // console.log('Cache cleared: commented on report');
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        comment: {
-          id: comment.rows[0].id,
-          text,
-          user_id: userId,
-          report_id: reportId,
-        },
-      });
+    res.status(201).json({
+      success: true,
+      comment: {
+        id: comment.rows[0].id,
+        text,
+        user_id: userId,
+        report_id: reportId,
+      },
+    });
   } catch (e) {
     console.error("Failed to comment on report", e);
     res
@@ -603,7 +620,7 @@ export const getAllReports = async (req, res) => {
     const reports = await client.query(
       `
         SELECT 
-          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp,
+          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id,
           u.username, u.profile_image, u.name,
           c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
           cu.username AS comment_username, cu.profile_image AS comment_profile_image, cu.name AS comment_name,
@@ -637,7 +654,7 @@ export const getAllReports = async (req, res) => {
         LEFT JOIN report_photos rp ON r.id = rp.report_id
         LEFT JOIN report_documents rd ON r.id = rd.report_id
         LEFT JOIN report_videos rv ON r.id = rv.report_id
-        GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at,
+        GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at, r.group_id,
                 u.username, u.profile_image, u.name,
                 c.id, c.comment, c.user_id,
                 cu.username, cu.profile_image, cu.name, likes_count.likes
@@ -652,6 +669,7 @@ export const getAllReports = async (req, res) => {
       if (!reportsMap.has(row.id)) {
         reportsMap.set(row.id, {
           id: row.id,
+          group_id: row.group_id,
           user_id: row.user_id,
           latitude: row.latitude,
           longitude: row.longitude,

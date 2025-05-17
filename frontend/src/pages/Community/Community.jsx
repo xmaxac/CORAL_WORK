@@ -19,12 +19,14 @@ import LatestNewsSidebar from "@/components/community/LatestNewsSidebar";
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Community = () => {
   const { token, url, user } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(false);
   const [REPORTS, setREPORTS] = useState({});
+  const [groups, setGroups] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("All");
   const [countryOptions, setCountryOptions] = useState([]);
   const { t } = useTranslation();
@@ -98,8 +100,6 @@ const Community = () => {
             );
             return aDist - bDist; // closer first
           });
-
-          console.log(sortedData);
           setREPORTS(sortedData);
         });
       } catch (e) {
@@ -128,6 +128,21 @@ const Community = () => {
     fetchData();
   }, [token, url]); // Re-run this effect if token or URL changes
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const groupRes = await axios.get(`${url}/api/groups/all`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setGroups(groupRes.data);
+      } catch (e) {
+        toast.error("Failed to load group reports");
+      }
+    };
+    fetchData();
+  }, [token])
+
   // Function to remove a report from the displayed list when deleted
   const handleDelete = (reportId) => {
     setREPORTS((prevREPORTS) =>
@@ -155,23 +170,29 @@ const Community = () => {
             </div>
           )}
 
-          <div className="mb-4 px-8">
-            <label htmlFor="countryFilter" className="mr-2 font-medium">
-              Filter by Country:
-            </label>
-            <select
-              id="countryFilter"
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-              className="border rounded p-2"
-            >
-              <option value="All">All Countries</option>
-              {countryOptions.map((code) => (
-                <option key={code} value={code}>
-                  {toCountryName(code)}
-                </option>
-              ))}
-            </select>
+          <div className="flex justify-between items-center mb-4 px-8">
+            <div>
+              <label htmlFor="countryFilter" className="mr-2 font-medium">
+                Filter by Country:
+              </label>
+              <select
+                id="countryFilter"
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                className="border rounded p-2"
+              >
+                <option value="All">All Countries</option>
+                {countryOptions.map((code) => (
+                  <option key={code} value={code}>
+                    {toCountryName(code)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Link to="/group" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              View Groups
+            </Link>
           </div>
 
           {/* Show message when no reports are available */}
@@ -184,13 +205,16 @@ const Community = () => {
             <div className="flex justify-between px-6">
               {/* Main content area with reports */}
               <div>
-                {REPORTS.filter((report) => selectedCountry === "All" || report.country_code?.trim() === selectedCountry).map((report) => (
-                  <Reports
-                    key={report.id}
-                    report={report}
-                    currentUserId={user?.id} // Pass current user ID to enable delete function for own reports
-                    onDelete={handleDelete}
-                  />
+                {groups.map((group) => (
+                  REPORTS.filter((report) => selectedCountry === "All" || report.country_code?.trim() === selectedCountry).map((report) => (
+                    <Reports
+                      key={report.id}
+                      report={report}
+                      currentUserId={user?.id} // Pass current user ID to enable delete function for own reports
+                      onDelete={handleDelete}
+                      group={group}
+                    />
+                  ))
                 ))}
               </div>
 

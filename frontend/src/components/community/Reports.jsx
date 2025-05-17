@@ -22,7 +22,7 @@ import { toast } from "react-toastify";
 
 countries.registerLocale(enLocale);
 
-const Reports = ({ report, currentUserId, onDelete }) => {
+const Reports = ({ report, currentUserId, onDelete, group }) => {
   const {
     country_code,
     description,
@@ -39,6 +39,7 @@ const Reports = ({ report, currentUserId, onDelete }) => {
     reef_type,
     average_depth,
     water_temp,
+    group_id
   } = report;
   const { username, profile_image, name } = report.user;
   const reportOwnerId = report.user_id;
@@ -51,7 +52,8 @@ const Reports = ({ report, currentUserId, onDelete }) => {
   const { url, token } = useContext(AppContext);
 
   const hasValidPhotos = photos && photos.length > 0 && !photos.includes(null);
-  const hasValidDocuments = documents && documents.length > 0 && !documents.includes(null);
+  const hasValidDocuments =
+    documents && documents.length > 0 && !documents.includes(null);
   const hasValidVideos = videos && videos.length > 0 && !videos.includes(null);
 
   const handleDeleteReport = async () => {
@@ -122,7 +124,7 @@ const Reports = ({ report, currentUserId, onDelete }) => {
 
   const truncateFileName = (fileName, maxLength) => {
     if (fileName.length > maxLength) {
-      return fileName.substring(0, maxLength) + '...'
+      return fileName.substring(0, maxLength) + "...";
     }
     return fileName;
   };
@@ -151,6 +153,8 @@ const Reports = ({ report, currentUserId, onDelete }) => {
     fetchLikeStatus();
   }, [report.id, url, token]);
 
+  console.log(report)
+
   return (
     <Card className="w-full max-w-3xl m-5">
       <CardHeader className="flex flex-row items-center space-x-4 pb-4">
@@ -177,6 +181,17 @@ const Reports = ({ report, currentUserId, onDelete }) => {
               >
                 {`Posted by ${name} - @${username}`}
               </Link>
+              {group.id === group_id && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <Link
+                    to={`/group/${group.id}`}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    c/{group.name}
+                  </Link>
+                </>
+              )}
             </div>
             {isMyPost && (
               <Button

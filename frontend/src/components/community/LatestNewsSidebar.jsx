@@ -10,7 +10,6 @@ const LatestNewsSidebar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { url } = useContext(AppContext);
   const [error, setError] = useState(null);
-  const apiUrl = import.meta.env.VITE_NEWS_API_KEY;
 
   useEffect(() => {
     const fetchNews = async () => {

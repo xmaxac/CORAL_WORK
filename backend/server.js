@@ -24,6 +24,7 @@ import userRouter from "./routes/userRouter.js";
 import chatbotRouter from "./routes/chatbotRouter.js";
 import detectionRouter from "./routes/detectionRouter.js";
 import chatRouter from "./routes/chatRouter.js";
+import groupRouter from "./routes/groupRouter.js";
 import dotenv from "dotenv";
 import axios from "axios";
 import pool from "./database/db.js";
@@ -122,6 +123,7 @@ app.use("/api/user", userRouter); // Handles user-related operations
 app.use("/api/chatbot", chatbotRouter); // Provides chatbot services
 app.use("/api/detection", detectionRouter); // Manages detection-related processes
 app.use("/api/chat", chatRouter);
+app.use("/api/groups", groupRouter);
 
 /**
  * Fetch latest marine conservation news
