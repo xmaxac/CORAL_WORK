@@ -263,10 +263,11 @@ const DataPage = () => {
 
                                   <CardContent className="space-y-2">
                                     {/* Image or Carousel */}
-                                    {selectedLocation.photos && selectedLocation.photos.length && selectedLocation.photos != null > 0 && (
+                                    {/* TODO:Fix photos because they are using old response */}
+                                    {selectedLocation.photos.photo_url && selectedLocation.photos.length && selectedLocation.photos != null > 0 && (
                                       selectedLocation.photos.length === 1 ? (
                                         <img
-                                          src={selectedLocation.photos[0]}
+                                          src={selectedLocation.photos.photo_url[0]}
                                           alt={selectedLocation.title}
                                           className="rounded-md w-full h-40 object-cover"
                                         />
