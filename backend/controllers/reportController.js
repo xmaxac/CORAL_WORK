@@ -652,8 +652,9 @@ export const getAllReports = async (req, res) => {
     const reports = await client.query(
       `
         SELECT 
-          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id,
-          u.username, u.profile_image, u.name,
+          r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id, r.status,
+          r.verified_by, r.verified_at, r.verification_note,
+          u.username, u.profile_image, u.name, u.role,
           COALESCE(likes_count.likes, 0) AS likes
         FROM reports r
         JOIN users u ON r.user_id = u.id
@@ -689,7 +690,12 @@ export const getAllReports = async (req, res) => {
           username: row.username,
           profile_image: row.profile_image,
           name: row.name,
+          role: row.role,
         },
+        status: row.status,
+        verified_by: row.verified_by,
+        verified_at: row.verified_at,
+        verification_note: row.verification_note,
         likes: row.likes,
         photos: [],
         documents: [],
@@ -819,8 +825,9 @@ export const getUserReports = async (req, res) => {
     const reportsResult = await client.query(
       `
       SELECT 
-        r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id,
-        u.username, u.profile_image, u.name,
+        r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id, r.status,
+        r.verified_by, r.verified_at, r.verification_note,
+        u.username, u.profile_image, u.name, u.role,
         COALESCE(likes_count.likes, 0) AS likes
       FROM reports r
       JOIN users u ON r.user_id = u.id
@@ -857,7 +864,12 @@ export const getUserReports = async (req, res) => {
           username: row.username,
           profile_image: row.profile_image,
           name: row.name,
+          role: row.role,
         },
+        status: row.status,
+        verified_by: row.verified_by,
+        verified_at: row.verified_at,
+        verification_note: row.verification_note,
         likes: row.likes,
         photos: [],
         documents: [],
@@ -1035,3 +1047,53 @@ export const getLatestReports = async (req, res) => {
     client.release();
   }
 };
+
+export const verifyReport = async (req, res) => {
+  const client = await pool.connect();
+  const reportId = req.params.id;
+  const { status, verification_note } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const user = await client.query(
+      "SELECT role FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (user.rows[0].role !== "researcher") {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to verify reports",
+      });
+    }
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
+
+    if (!verification_note) {
+      return res.status(400).json({
+        success: false,
+        message: "Note is required",
+      });
+    }
+
+    await client.query(
+      "UPDATE reports SET status = $1, verified_by = $2, verified_at = NOW(), verification_note = $3 WHERE id = $4",
+      [status, userId, verification_note, reportId]
+    )
+
+    res.status(200).json({
+      success: true,
+      message: "Report verified successfully",
+    })
+  } catch (e) {
+    console.error("Failed to verify report", e);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to verify report" });
+  }
+}

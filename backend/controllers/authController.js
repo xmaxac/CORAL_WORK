@@ -60,12 +60,13 @@ const sendVerificationEmail = (email, code) => {
 // }
 
 export const register = async (req, res) => {
+  console.log('Registering user:', req.body);
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    if ((!req.body.email || !req.body.password || !req.body.username || !req.body.name)) {
+    if ((!req.body.email || !req.body.password || !req.body.username || !req.body.name || !req.body.role)) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields'
@@ -119,14 +120,13 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
         const userResult = await client.query(
-          `INSERT INTO users (email, name, username, password, is_verified)
-        VALUES ($1, $2, $3, $4, false)
-        RETURNING id, email, name, username`,
-          [req.body.email, req.body.name, req.body.username, hashedPassword]
+          `INSERT INTO users (email, name, username, password, is_verified, role)
+        VALUES ($1, $2, $3, $4, false, $5)
+        RETURNING id, email, name, username, role`,
+          [req.body.email, req.body.name, req.body.username, hashedPassword, req.body.role]
         );
 
         const userId = userResult.rows[0].id;
-
 
         // 8. Generate and store verification code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -307,7 +307,7 @@ export const getme = async (req, res) => {
     const userId = req.user.id;
 
     const userResult = await client.query(
-      `SELECT id, email, name, username, profile_image, cover_image, bio, link FROM users WHERE id = $1`,
+      `SELECT id, email, name, username, profile_image, cover_image, bio, link, role FROM users WHERE id = $1`,
       [userId]
     );
 
@@ -319,7 +319,7 @@ export const getme = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name, username: user.username, profile_image: user.profile_image, cover_image: user.cover_image, bio: user.bio, link: user.link }
+      user: { id: user.id, email: user.email, name: user.name, username: user.username, profile_image: user.profile_image, cover_image: user.cover_image, bio: user.bio, link: user.link, role: user.role }
     });
   } catch (e) {
     console.error('GetMe error:', e);

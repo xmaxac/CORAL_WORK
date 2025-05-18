@@ -13,7 +13,8 @@ const LoginPopup = ({setShowLogin}) => {
     name:"",
     username:"",
     email:"",
-    password:""
+    password:"",
+    role: ""
   })
 
   const onChangeHandler = (event) => {
@@ -148,6 +149,15 @@ const LoginPopup = ({setShowLogin}) => {
           )}
           <input className='outline-none border border-[#c9c9c9] p-[10px] rounded-sm' name='email' onChange={onChangeHandler} value={data.email} type="email" placeholder='Email' required/>
           <input className='outline-none border border-[#c9c9c9] p-[10px] rounded-sm' name='password' onChange={onChangeHandler} value={data.password} type="password" placeholder='Password' required/>
+          {currState==="Login"? (
+          <></> ): (
+            <select name='role' className='outline-none border border-[#c9c9c9] p-[10px] rounded-sm' required onChange={onChangeHandler} value={data.role}>
+              <option value="" disabled>Account Type</option>
+              <option value="user">Public User</option>
+              <option value="researcher">Researcher</option>
+            </select>
+          )}
+
         </div>
         <button className='border border-none p-[10px] rounded-sm text-white bg-blue-500 text-[15px] cursor-pointer' type='submit'>{currState==="Sign Up"?"Create Account":"Login"}</button>
         <div className='flex items-center gap-2 mt-[-15px]'>

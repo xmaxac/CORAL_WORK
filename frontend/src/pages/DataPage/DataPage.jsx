@@ -1,43 +1,38 @@
 /**
  * Data Page Component
- * 
+ *
  * This component displays a dashboard with:
  * - An interactive map showing report locations with markers
  * - A bar chart showing report counts by country
  * - A list of recent reports with alerts
- * 
+ *
  * The page requires user authentication to access content.
  * If a user is not logged in, they will see a message prompting them to sign in.
  */
 
-import React, { useState, useEffect, useRef, useContext } from 'react'
+import React, { useState, useEffect, useRef, useContext } from "react";
 import axios from "axios";
-import {
-  Map,
-  Clipboard,
-  ShieldAlert
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Carousel } from 'react-responsive-carousel';
-import 'react-responsive-carousel/lib/styles/carousel.min.css'
-import { Alert, AlertDescription, AlertTitle,  } from "@/components/ui/alert"
+import { Map, Clipboard, ShieldAlert } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Carousel } from "react-responsive-carousel";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   GoogleMap,
   LoadScript,
   Marker,
   InfoWindow,
-  HeatmapLayer
+  HeatmapLayer,
 } from "@react-google-maps/api";
-import { ChartContainer,ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, XAxis, YAxis  } from 'recharts';
-import { AppContext } from '@/context/AppContext';
-import {useNavigate} from 'react-router-dom'
-import { useTranslation } from 'react-i18next';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { AppContext } from "@/context/AppContext";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 // Required libraries for Google Maps
 const libraries = ["places"];
@@ -45,19 +40,19 @@ const libraries = ["places"];
 const DataPage = () => {
   // Navigation function to change page
   const navigate = useNavigate();
-  
+
   // State variables to store data and UI states
-  const [locations, setLocations] = useState([]);  // All report locations for map markers
-  const [pos, setPos] = useState({ lat: 0, lng: 0 });  // Current map position
-  const [selectedLocation, setSelectedLocation] = useState(null);  // Currently selected marker
-  const [chartData, setChartData] = useState([]);  // Data for country bar chart
-  const [latestReports, setLatestReports] = useState([]);  // Recent reports for sidebar
+  const [locations, setLocations] = useState([]); // All report locations for map markers
+  const [pos, setPos] = useState({ lat: 0, lng: 0 }); // Current map position
+  const [selectedLocation, setSelectedLocation] = useState(null); // Currently selected marker
+  const [chartData, setChartData] = useState([]); // Data for country bar chart
+  const [latestReports, setLatestReports] = useState([]); // Recent reports for sidebar
   const [showHeatMap, setShowHeatMap] = useState(false);
   const [heatMapData, setHeatMapData] = useState([]);
-  
+
   // Get authentication token and API URL from app context
-  const {token, url} = useContext(AppContext);
-  
+  const { token, url } = useContext(AppContext);
+
   // Reference to the map object for programmatic control
   const mapRef = useRef(null);
 
@@ -70,11 +65,11 @@ const DataPage = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const {latitude, longitude} = position.coords;
-          setPos({lat: latitude, lng: longitude});
+          const { latitude, longitude } = position.coords;
+          setPos({ lat: latitude, lng: longitude });
         },
         (error) => {
-          console.error('Error getting current location:', error);
+          console.error("Error getting current location:", error);
         }
       );
     }
@@ -84,14 +79,14 @@ const DataPage = () => {
       try {
         const response = await axios.get(`${url}/api/report/country`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = response.data.data;
 
         setChartData(data);
       } catch (e) {
-        console.error('Error fecthing data:', e)
+        console.error("Error fecthing data:", e);
       }
     };
 
@@ -100,14 +95,14 @@ const DataPage = () => {
       try {
         const response = await axios.get(`${url}/api/report/latest-reports`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = response.data.data;
 
         setLatestReports(data);
       } catch (e) {
-        console.error('Error fetching latest reports:', e);
+        console.error("Error fetching latest reports:", e);
       }
     };
 
@@ -116,47 +111,47 @@ const DataPage = () => {
       try {
         const response = await axios.get(`${url}/api/report/all`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = response.data.reports;
 
         if (Array.isArray(data)) {
           setLocations(data);
         } else {
-          console.error('Expected an array but got:', data);
+          console.error("Expected an array but got:", data);
         }
       } catch (e) {
-        console.error('Error fetching locations:', e)
+        console.error("Error fetching locations:", e);
       }
     };
 
     // Call all data fetching functions
-    fetchReports()
+    fetchReports();
     fetchLatestReports();
     fetchCountryData();
-  }, [token, url])  // Re-run this effect if token or URL changes
+  }, [token, url]); // Re-run this effect if token or URL changes
 
   // Navigate to community page when clicking a recent report
   const handleReportClick = () => {
     navigate(`/community`);
-  }
+  };
 
   // Shorten long descriptions with ellipsis
   const truncateDescription = (description, maxLength) => {
     if (description.length > maxLength) {
-      return description.substring(0, maxLength) + '...'
+      return description.substring(0, maxLength) + "...";
     }
     return description;
   };
 
   // Configuration for the bar chart appearance
   const ChartConfig = {
-    cases : {
+    cases: {
       label: "# of Cases ",
-      color: "#3b82f6"
-    }
-  }
+      color: "#3b82f6",
+    },
+  };
 
   // Handle clicking on a map marker
   const handleMarkerClick = (location) => {
@@ -169,172 +164,226 @@ const DataPage = () => {
 
   const truncateFileName = (fileName, maxLength) => {
     if (fileName.length > maxLength) {
-      return fileName.substring(0, maxLength) + '...'
+      return fileName.substring(0, maxLength) + "...";
     }
     return fileName;
   };
 
   // Calculate maximum value for chart Y-axis scale
-  const maxCases = chartData.length > 0 ? Math.max(...chartData.map(data => data.cases)) : 0;
+  const maxCases =
+    chartData.length > 0 ? Math.max(...chartData.map((data) => data.cases)) : 0;
 
   return (
     <>
-    {/* Only show content if user is logged in (has a token) */}
-    {token ? (
-      <div>
-        {/* Main Content */}
-        <div className='max-w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6'>
-          {/* Map Section - Takes 2/3 of screen on medium screens and larger */}
-          <div className='w-full md:col-span-2'>
-            <Card className="h-[300px] md:h-[512px] select-none" >
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between" >
-                  <div className='flex items-center space-x-2'>
-                    <Map size={20} />
-                    <span>{t('data.map.title')}</span>
-                  </div>
-                  <button onClick={() => setShowHeatMap(prev => !prev)}>
-                    {showHeatMap ? "Show Markers" : "Show Heatmap"}
-                  </button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent >
-                <div className='w-full h-96 mb-6 bg-slate-100 rounded-lg flex items-center justify-center '>
-                  {/* Google Maps Component */}
-                  <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY} libraries={['visualization', ...libraries]}>
-                    <GoogleMap
-                      mapContainerStyle={{ height: "100%", width: "100%" }}
-                      center={pos}
-                      zoom={6.5}
-                      onLoad={(map) => {
-                        mapRef.current = map;
-                      
-                        const google = window.google;
-                      
-                        const data = locations.map((loc) => ({
-                          location: new google.maps.LatLng(
-                            parseFloat(loc.latitude),
-                            parseFloat(loc.longitude)
-                          ),
-                          weight: 1, // or custom weight
-                        }));
-                      
-                        setHeatMapData(data);
-                      }}
+      {/* Only show content if user is logged in (has a token) */}
+      {token ? (
+        <div>
+          {/* Main Content */}
+          <div className="max-w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {/* Map Section - Takes 2/3 of screen on medium screens and larger */}
+            <div className="w-full md:col-span-2">
+              <Card className="h-[300px] md:h-[512px] select-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Map size={20} />
+                      <span>{t("data.map.title")}</span>
+                    </div>
+                    <button onClick={() => setShowHeatMap((prev) => !prev)}>
+                      {showHeatMap ? "Show Markers" : "Show Heatmap"}
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full h-96 mb-6 bg-slate-100 rounded-lg flex items-center justify-center ">
+                    {/* Google Maps Component */}
+                    <LoadScript
+                      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY}
+                      libraries={["visualization", ...libraries]}
                     >
-                      {showHeatMap && heatMapData.length > 0 ? (
-                        <HeatmapLayer
-                          data={heatMapData}
-                          options={{
-                            radius: 80, // Spread size
-                            dissipating: true,
-                            opacity: 0.6,
-                            gradient: [
-                              "rgba(0, 0, 255, 0)",     // Transparent blue
-                              "rgba(0, 0, 255, 0.5)",   // Light blue
-                              "rgba(0, 255, 255, 0.7)", // Cyan
-                              "rgba(0, 255, 0, 0.7)",   // Green
-                              "rgba(255, 255, 0, 0.7)", // Yellow
-                              "rgba(255, 0, 0, 1.0)",   // Red
-                            ]
-                          }}
-                        />
-                      ) : (
-                        <>
-                          {/* Create a marker for each report location */}
-                          {locations.map((location) => (
-                            <Marker 
-                              key={location.id}
-                              position={{ lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) }}
-                              onClick={() => handleMarkerClick(location)}
-                            />
-                          ))}
-                          
-                          {/* Show info window when a marker is selected */}
-                          {selectedLocation && (
-                            <InfoWindow
-                              position={{ lat: parseFloat(selectedLocation.latitude), lng: parseFloat(selectedLocation.longitude) }}
-                              onCloseClick={() => setSelectedLocation(null)}
-                            >
+                      <GoogleMap
+                        mapContainerStyle={{ height: "100%", width: "100%" }}
+                        center={pos}
+                        zoom={6.5}
+                        onLoad={(map) => {
+                          mapRef.current = map;
+
+                          const google = window.google;
+
+                          const data = locations.map((loc) => ({
+                            location: new google.maps.LatLng(
+                              parseFloat(loc.latitude),
+                              parseFloat(loc.longitude)
+                            ),
+                            weight: 1, // or custom weight
+                          }));
+
+                          setHeatMapData(data);
+                        }}
+                      >
+                        {showHeatMap && heatMapData.length > 0 ? (
+                          <HeatmapLayer
+                            data={heatMapData}
+                            options={{
+                              radius: 80, // Spread size
+                              dissipating: true,
+                              opacity: 0.6,
+                              gradient: [
+                                "rgba(0, 0, 255, 0)", // Transparent blue
+                                "rgba(0, 0, 255, 0.5)", // Light blue
+                                "rgba(0, 255, 255, 0.7)", // Cyan
+                                "rgba(0, 255, 0, 0.7)", // Green
+                                "rgba(255, 255, 0, 0.7)", // Yellow
+                                "rgba(255, 0, 0, 1.0)", // Red
+                              ],
+                            }}
+                          />
+                        ) : (
+                          <>
+                            {/* Create a marker for each report location */}
+                            {locations.map((location) => (
+                              <Marker
+                                key={location.id}
+                                position={{
+                                  lat: parseFloat(location.latitude),
+                                  lng: parseFloat(location.longitude),
+                                }}
+                                onClick={() => handleMarkerClick(location)}
+                                icon={{
+                                  path: google.maps.SymbolPath.CIRCLE,
+                                  fillColor:
+                                    location.status === "approved"
+                                      ? "#10B981" // green
+                                      : location.status === "under review"
+                                      ? "#F59E0B" // yellow
+                                      : location.status === "rejected"
+                                      ? "#EF4444" // red
+                                      : "#6B7280", // gray (default)
+                                  fillOpacity: 1,
+                                  strokeWeight: 1,
+                                  strokeColor: "#FFFFFF",
+                                  scale: 8,
+                                }}
+                              />
+                            ))}
+
+                            {/* Show info window when a marker is selected */}
+                            {selectedLocation && (
+                              <InfoWindow
+                                position={{
+                                  lat: parseFloat(selectedLocation.latitude),
+                                  lng: parseFloat(selectedLocation.longitude),
+                                }}
+                                onCloseClick={() => setSelectedLocation(null)}
+                              >
                                 <Card className="w-[300px] rounded-xl shadow-lg overflow-hidden">
                                   <CardHeader className="pb-2">
-                                    <h3 className="text-lg font-semibold truncate">{selectedLocation.title}</h3>
+                                    <h3 className="text-lg font-semibold truncate">
+                                      {selectedLocation.title}
+                                    </h3>
                                   </CardHeader>
 
                                   <CardContent className="space-y-2">
                                     {/* Image or Carousel */}
                                     {/* TODO:Fix photos because they are using old response */}
-                                    {selectedLocation.photos.photo_url && selectedLocation.photos.length && selectedLocation.photos != null > 0 && (
-                                      selectedLocation.photos.length === 1 ? (
+                                    {selectedLocation.photos.photo_url &&
+                                      selectedLocation.photos.length &&
+                                      selectedLocation.photos != null > 0 &&
+                                      (selectedLocation.photos.length === 1 ? (
                                         <img
-                                          src={selectedLocation.photos.photo_url[0]}
+                                          src={
+                                            selectedLocation.photos.photo_url[0]
+                                          }
                                           alt={selectedLocation.title}
                                           className="rounded-md w-full h-40 object-cover"
                                         />
                                       ) : (
-                                        <Carousel showThumbs={false} showStatus={false} infiniteLoop>
-                                          {selectedLocation.photos.map((photo, i) => (
-                                            <div key={i}>
-                                              <img
-                                                src={photo}
-                                                alt={`${selectedLocation.title} ${i + 1}`}
-                                                className="rounded-md w-full h-40 object-cover"
-                                              />
-                                            </div>
-                                          ))}
+                                        <Carousel
+                                          showThumbs={false}
+                                          showStatus={false}
+                                          infiniteLoop
+                                        >
+                                          {selectedLocation.photos.map(
+                                            (photo, i) => (
+                                              <div key={i}>
+                                                <img
+                                                  src={photo}
+                                                  alt={`${
+                                                    selectedLocation.title
+                                                  } ${i + 1}`}
+                                                  className="rounded-md w-full h-40 object-cover"
+                                                />
+                                              </div>
+                                            )
+                                          )}
                                         </Carousel>
-                                      )
-                                    )}
-                                    {selectedLocation.videos && selectedLocation.videos.length > 0 && (
-                                      selectedLocation.videos.length === 1 ? (
+                                      ))}
+                                    {selectedLocation.videos &&
+                                      selectedLocation.videos.length > 0 &&
+                                      (selectedLocation.videos.length === 1 ? (
                                         <video
                                           controls
-                                          className='rounded-md w-full h-full object-cover'
-                                          src={selectedLocation.videos[0].s3_url}
+                                          className="rounded-md w-full h-full object-cover"
+                                          src={
+                                            selectedLocation.videos[0].s3_url
+                                          }
                                         >
-                                          Your browser does not support the video tag
+                                          Your browser does not support the
+                                          video tag
                                         </video>
                                       ) : (
-                                        <Carousel showThumbs={false} showStatus={false} infiniteLoop>
-                                          {selectedLocation.videos.map((video, i) => (
-                                            <div key={i}>
-                                              <video
-                                                controls
-                                                className='rounded-md w-full h-full object-cover'
-                                                src={video.s3_url}
-                                              >
-                                                Your browser does not support the video tag
-                                              </video>
-                                            </div>
-                                          ))}
+                                        <Carousel
+                                          showThumbs={false}
+                                          showStatus={false}
+                                          infiniteLoop
+                                        >
+                                          {selectedLocation.videos.map(
+                                            (video, i) => (
+                                              <div key={i}>
+                                                <video
+                                                  controls
+                                                  className="rounded-md w-full h-full object-cover"
+                                                  src={video.s3_url}
+                                                >
+                                                  Your browser does not support
+                                                  the video tag
+                                                </video>
+                                              </div>
+                                            )
+                                          )}
                                         </Carousel>
-                                      )
-                                    )}
-                                    {selectedLocation.documents && selectedLocation.documents.length > 0 && (
-                                      <div className="grid gap-4 mt-4">
-                                        {selectedLocation.documents.map((doc, index) => (
-                                          <div
-                                            key={index}
-                                            className="p-3 border rounded-lg flex flex-col items-start justify-between bg-white shadow hover:shadow-md transition overflow-hidden"
-                                          >
-                                            <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                                              {truncateFileName(doc.file_name, 20)}
-                                            </p>
-                                            <div className="mt-2 flex items-center gap-2">
-                                              {/* Preview in new tab */}
-                                              <a
-                                                href={doc.s3_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 text-sm underline cursor-pointer"
+                                      ))}
+                                    {selectedLocation.documents &&
+                                      selectedLocation.documents.length > 0 && (
+                                        <div className="grid gap-4 mt-4">
+                                          {selectedLocation.documents.map(
+                                            (doc, index) => (
+                                              <div
+                                                key={index}
+                                                className="p-3 border rounded-lg flex flex-col items-start justify-between bg-white shadow hover:shadow-md transition overflow-hidden"
                                               >
-                                                Download
-                                              </a>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                                <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                                  {truncateFileName(
+                                                    doc.file_name,
+                                                    20
+                                                  )}
+                                                </p>
+                                                <div className="mt-2 flex items-center gap-2">
+                                                  {/* Preview in new tab */}
+                                                  <a
+                                                    href={doc.s3_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 text-sm underline cursor-pointer"
+                                                  >
+                                                    Download
+                                                  </a>
+                                                </div>
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
                                     {/* Description */}
                                     {selectedLocation.description && (
                                       <p className="text-sm text-gray-700 max-h-[80px] overflow-y-auto">
@@ -345,98 +394,119 @@ const DataPage = () => {
                                     {/* Coordinates */}
                                     <div className="text-xs text-gray-500">
                                       <Map className="inline-block w-3 h-3 mr-1" />
-                                      {`${parseFloat(selectedLocation.latitude).toFixed(4)}, ${parseFloat(selectedLocation.longitude).toFixed(4)}`}
+                                      {`${parseFloat(
+                                        selectedLocation.latitude
+                                      ).toFixed(4)}, ${parseFloat(
+                                        selectedLocation.longitude
+                                      ).toFixed(4)}`}
                                     </div>
                                   </CardContent>
                                 </Card>
-                            </InfoWindow>
-                          )}
-                        </>
-                      )}
-                    </GoogleMap>
-                  </LoadScript>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Takes 1/3 of screen on medium screens and larger */}
-          <div className='grid grid-cols-1 gap-4'>
-            {/* Bar Chart Section */}
-            <Card className="h-[250px] md:h-[300px] select-none" >
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between" >
-                  <div className='flex items-center space-x-2'>
-                    <Clipboard size={20}/>
-                    <span>{t('data.country.title')}</span>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[210px] rounded-lg flex items-center justify-center">
-                  {/* Show bar chart if data is available */}
-                  {chartData && chartData.length > 0 ? (
-                    <ChartContainer config={ChartConfig} className="min-h-[210px] w-full">
-                      <BarChart accessibilityLayer data={chartData}>
-                        <XAxis
-                          dataKey="country"
-                          tickMargin={10}
-                          tickLine={false}
-                          tickFormatter={(value) => value.slice(0, 3)}  // Show only first 3 characters of country name
-                          axisLine={false}
-                        />
-                        {chartData && chartData.length > 0 && (
-                          <YAxis
-                            domain={[0, maxCases]}  // Set Y-axis scale based on maximum value
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                          />
+                              </InfoWindow>
+                            )}
+                          </>
                         )}
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="cases" fill="var(--color-cases)" radius={4} />
-                      </BarChart>
-                    </ChartContainer>
-                  ) : (
-                    <p className="text-center my-4">{t('data.none.country')}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Reports Section */}
-            <Card className="select-none" >
-              <CardHeader className="py-3" >
-                <CardTitle className="text-lg">{t('data.recentReports.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4" >
-                {/* Show alerts for recent reports if available */}
-                {latestReports.length > 0 ? (
-                  <div className='space-y-1' >
-                    {latestReports.map(report => (
-                      <Alert key={report.id} onClick={() => handleReportClick()} className="cursor-pointer">
-                        <ShieldAlert className='h-4 w-4'/>
-                        <AlertTitle>{report.title}</AlertTitle>
-                        <AlertDescription>{truncateDescription(report.description, 40)}</AlertDescription>
-                      </Alert>
-                    ))}
+                      </GoogleMap>
+                    </LoadScript>
                   </div>
-                ) : (
-                  <p className="text-center my-4">{t("data.none.reports")}</p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar - Takes 1/3 of screen on medium screens and larger */}
+            <div className="grid grid-cols-1 gap-4">
+              {/* Bar Chart Section */}
+              <Card className="h-[250px] md:h-[300px] select-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Clipboard size={20} />
+                      <span>{t("data.country.title")}</span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[210px] rounded-lg flex items-center justify-center">
+                    {/* Show bar chart if data is available */}
+                    {chartData && chartData.length > 0 ? (
+                      <ChartContainer
+                        config={ChartConfig}
+                        className="min-h-[210px] w-full"
+                      >
+                        <BarChart accessibilityLayer data={chartData}>
+                          <XAxis
+                            dataKey="country"
+                            tickMargin={10}
+                            tickLine={false}
+                            tickFormatter={(value) => value.slice(0, 3)} // Show only first 3 characters of country name
+                            axisLine={false}
+                          />
+                          {chartData && chartData.length > 0 && (
+                            <YAxis
+                              domain={[0, maxCases]} // Set Y-axis scale based on maximum value
+                              axisLine={false}
+                              tickLine={false}
+                              tickMargin={10}
+                            />
+                          )}
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar
+                            dataKey="cases"
+                            fill="var(--color-cases)"
+                            radius={4}
+                          />
+                        </BarChart>
+                      </ChartContainer>
+                    ) : (
+                      <p className="text-center my-4">
+                        {t("data.none.country")}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Reports Section */}
+              <Card className="select-none">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-lg">
+                    {t("data.recentReports.title")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  {/* Show alerts for recent reports if available */}
+                  {latestReports.length > 0 ? (
+                    <div className="space-y-1">
+                      {latestReports.map((report) => (
+                        <Alert
+                          key={report.id}
+                          onClick={() => handleReportClick()}
+                          className="cursor-pointer"
+                        >
+                          <ShieldAlert className="h-4 w-4" />
+                          <AlertTitle>{report.title}</AlertTitle>
+                          <AlertDescription>
+                            {truncateDescription(report.description, 40)}
+                          </AlertDescription>
+                        </Alert>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center my-4">{t("data.none.reports")}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
-    ) : (
-      // Show sign-in message if user is not logged in
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-center text-xl">{t('global.signToView')}</p>
-      </div>
-    )}
+      ) : (
+        // Show sign-in message if user is not logged in
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-center text-xl">{t("global.signToView")}</p>
+        </div>
+      )}
     </>
-  )
-}
+  );
+};
 
 export default DataPage;

@@ -11,6 +11,7 @@ import {
   SearchCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ReportVerification from "./ReportVerification";
 import { AppContext } from "@/context/AppContext";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardFooter } from "../ui/card";
@@ -41,6 +42,8 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
     average_depth,
     water_temp,
     group_id,
+    status,
+    verification_note,
   } = report;
   const { username, profile_image, name } = report.user;
   const reportOwnerId = report.user_id;
@@ -51,7 +54,10 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
   const [showDetectionModal, setShowDetectionModal] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [comments, setComments] = useState(report.comments || []);
-  const { url, token } = useContext(AppContext);
+  const { url, token, user } = useContext(AppContext);
+
+  const [reportStatus, setReportStatus] = useState(status);
+  const [reportVerificationNote, setReportVerificationNote] = useState(verification_note || '');
 
   const hasValidPhotos = photos && photos.length > 0 && !photos.includes(null);
   const hasValidDocuments =
@@ -109,6 +115,15 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
       }
     } catch (e) {
       console.error("Failed to like/unlike report", e);
+    }
+  };
+
+  const handleStatusUpdate = (newStatus, newNote) => {
+    setReportStatus(newStatus);
+    setReportVerificationNote(newNote);
+    // If you need to update the parent component
+    if (typeof onStatusUpdate === 'function') {
+      onStatusUpdate(report.id, newStatus, newNote);
     }
   };
 
@@ -220,6 +235,22 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
           <div className="flex flex-row items-center gap-2">
             <Map className="w-4 h-4" />
             <p className="text-sm text-gray-500">{`Location: ${latitude}, ${longitude} - ${countryName}`}</p>
+          </div>
+          <div className="flex flex-row items-center gap-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                status === "approved"
+                  ? "bg-green-500"
+                  : status === "under review"
+                  ? "bg-yellow-500"
+                  : status === "rejected"
+                  ? "bg-red-500"
+                  : "bg-gray-500"
+              }`}
+            ></div>
+            <p className="text-sm text-gray-500">
+              {`Status: ${status.toUpperCase()}`}
+            </p>
           </div>
         </div>
         <div>
@@ -350,7 +381,15 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
           </div>
         )}
       </CardContent>
-
+      {user.role === "researcher" && (
+        <ReportVerification
+          reportId={report.id}
+          currentStatus={status}
+          onStatusUpdate={handleStatusUpdate}
+          url={url}
+          token={token}
+        />
+      )}
       <CardFooter>
         <div className="flex gap-6 items-center">
           <Button

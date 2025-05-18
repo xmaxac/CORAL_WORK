@@ -11,7 +11,8 @@ import {
   likeUnlikeReport, 
   getAllReports, 
   getUserReports,
-  moderateReport
+  moderateReport,
+  verifyReport
 } from "../controllers/reportController.js"; // Import all functions from the reportController to handle various report-related operations
 import auth from "../middleware/auth.js"; // Middleware to check user authentication
 
@@ -65,6 +66,8 @@ reportRouter.get('/country', auth, getTopCountries);
 // Route to get the latest reports (authentication required)
 reportRouter.get('/latest-reports', auth, getLatestReports); 
 // 'auth' middleware ensures that only authenticated users can fetch the latest reports
+
+reportRouter.patch('/:id/verify', auth, verifyReport);
 
 // Export the router to be used in other parts of the application
 export default reportRouter;

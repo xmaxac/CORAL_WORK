@@ -107,7 +107,7 @@ const authLimiter = rateLimit({
 // Middleware configuration
 app.use(cors({
   origin: '*', // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
   credentials: true // Allow credentials (cookies, authorization headers)
 }));
 
