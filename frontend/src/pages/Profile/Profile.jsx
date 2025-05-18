@@ -13,12 +13,14 @@
 import React, { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppContext } from "@/context/AppContext";
+import axios from "axios";
 import {
   ArrowLeft,
   Link as LinkIcon,
   CalendarDays,
   Pencil,
   Loader2,
+  NotebookPen,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,6 +45,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import Reports from "@/components/community/Reports";
 
 // Dialog component for confirming changes to profile information
 const ConfirmDialog = ({ title, message, onConfirm, children }) => (
@@ -284,6 +287,7 @@ const Profile = () => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [userReports, setUserReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImageLoading, setIsImageLoading] = useState({
     profile: false,
@@ -319,6 +323,37 @@ const Profile = () => {
       setIsLoading(false);
     }
   }, [username, token, fetchProfileByUsername, setProfile]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+
+      if (!token) return;
+
+      setIsLoading(true);
+
+      try {
+        const response = await axios.get(`${url}/api/report/user/${username}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = response.data.reports;
+        console.log("User reports:", data);
+        setUserReports(data);
+        setIsLoading(false)
+      } catch (e) {
+        console.error("Error fetching user reports:", e);
+        toast.error("Failed to load user reports", {
+          position: 'top-center',
+          autoClose: 2000,
+          hideProgressBar: true,
+        });
+      }
+    };
+
+    fetchData();
+  }, [token, url, username]);
 
   // Check if the current user is the owner of the profile
   useEffect(() => {
@@ -421,6 +456,12 @@ const Profile = () => {
     } finally {
       // window.location.reload();
     }
+  };
+
+    const handleDelete = (reportId) => {
+    setUserReports((prevREPORTS) =>
+      prevREPORTS.filter((report) => report.id !== reportId)
+    );
   };
 
   return (
@@ -531,12 +572,6 @@ const Profile = () => {
                   >
                     Update Profile
                   </Button>
-                  // <button
-                  //   className='fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow-lg'
-                  //   onClick={handleProfileUpdate}
-                  // >
-                  //   Update Profile
-                  // </button>
                 )}
               </div>
             )}
@@ -573,6 +608,34 @@ const Profile = () => {
                   </span>
                 </div>
               </div>
+            </div>
+            <div className="flex flex-col gap-4 mt-10 border-t-[1px] py-4">
+              <div className="flex gap-2 items-center justify-center text-center uppercase text-sm font-semibold">
+                <NotebookPen size={16} />
+                <span>Reports</span>
+              </div>
+                {!isLoading && userReports.length === 0 && (
+                  <p className="text-center my-4">No reports available</p>
+                )}
+
+                {!isLoading && userReports.length > 0 && (
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      {userReports.map((report) => {
+                        return (
+                          <Reports 
+                            key={report.id}
+                            report={report}
+                            currentUserId={user?.id}
+                            onDelete={handleDelete}
+                            group={report.group_id}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
             </div>
           </>
           ) : (

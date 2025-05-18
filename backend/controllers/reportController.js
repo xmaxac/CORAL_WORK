@@ -804,74 +804,164 @@ export const getUserReports = async (req, res) => {
   const { username } = req.params;
 
   try {
-    const user = await client.query("SELECT * FROM users WHERE username = $1", [
+    // Get user
+    const userResult = await client.query("SELECT * FROM users WHERE username = $1", [
       username,
     ]);
+    const user = userResult.rows[0];
     if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    const posts = await client.query(
+
+    // Get reports for user
+    const reportsResult = await client.query(
       `
       SELECT 
-      r.*, 
-      u.username, u.profile_pic, u.name,
-      c.id AS comment_id, c.text AS comment_text, c.user_id AS comment_user_id,
-      cu.username AS comment_username, cu.profile_pic AS comment_profile_pic, cu.name AS comment_name
+        r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.created_at, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.group_id,
+        u.username, u.profile_image, u.name,
+        COALESCE(likes_count.likes, 0) AS likes
       FROM reports r
       JOIN users u ON r.user_id = u.id
-      LEFT JOIN report_comments c ON r.id = c.report_id
-      LEFT JOIN users cu ON c.user_id = cu.id
+      LEFT JOIN (
+        SELECT report_id, COUNT(*) AS likes
+        FROM report_likes
+        GROUP BY report_id
+      ) likes_count ON r.id = likes_count.report_id
       WHERE u.username = $1
-      ORDER BY r.report_date DESC
-    `,
+      ORDER BY r.created_at DESC;
+      `,
       [username]
     );
 
-    const postsMap = new Map();
+    const reportsMap = new Map();
 
-    posts.rows.forEach((row) => {
-      if (!postsMap.has(row.id)) {
-        postsMap.set(row.id, {
-          id: row.id,
-          user_id: row.user_id,
-          latitude: row.latitude,
-          longitude: row.longitude,
-          country_code: row.country_code,
-          description: row.description,
-          report_date: row.report_date,
-          user: {
-            username: row.username,
-            profile_pic: row.profile_pic,
-            name: row.name,
-          },
-          comments: [],
-        });
-      }
+    for (const row of reportsResult.rows) {
+      reportsMap.set(row.id, {
+        id: row.id,
+        group_id: row.group_id,
+        user_id: row.user_id,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        country_code: row.country_code,
+        title: row.title,
+        description: row.description,
+        report_date: row.report_date,
+        created_at: row.created_at,
+        reef_name: row.reef_name,
+        reef_type: row.reef_type,
+        average_depth: row.average_depth,
+        water_temp: row.water_temp,
+        user: {
+          username: row.username,
+          profile_image: row.profile_image,
+          name: row.name,
+        },
+        likes: row.likes,
+        photos: [],
+        documents: [],
+        videos: [],
+        comments: [],
+      });
+    }
 
-      if (row.comment_id) {
-        postsMap.get(row.id).comments.push({
-          id: row.comment_id,
-          text: row.comment_text,
-          user_id: row.comment_user_id,
-          user: {
-            username: row.comment_username,
-            profile_pic: row.comment_profile_pic,
-            name: row.comment_name,
-          },
-        });
-      }
-    });
-
-    const postsWithDetails = Array.from(postsMap.values());
-
-    if (postsWithDetails.length === 0) {
+    const reportIds = Array.from(reportsMap.keys());
+    if (reportIds.length === 0) {
       return res
         .status(404)
         .json({ success: false, message: "No posts found for this user" });
     }
-    res.json({ success: true, posts: postsWithDetails });
+
+    // Photos
+    const photosResult = await client.query(
+      `
+      SELECT 
+        report_id, photo_url, photo_detection 
+      FROM report_photos
+      WHERE report_id = ANY($1)
+      `,
+      [reportIds]
+    );
+    for (const photo of photosResult.rows) {
+      const report = reportsMap.get(photo.report_id);
+      if (report) {
+        report.photos.push({
+          photo_url: photo.photo_url,
+          photo_detection: photo.photo_detection
+        });
+      }
+    }
+
+    // Comments
+    const commentsResult = await client.query(
+      `
+      SELECT 
+        c.report_id, c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
+        u.username AS comment_username, u.profile_image AS comment_profile_image, u.name AS comment_name
+      FROM report_comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.report_id = ANY($1)
+      `,
+      [reportIds]
+    );
+    for (const comment of commentsResult.rows) {
+      const report = reportsMap.get(comment.report_id);
+      if (report) {
+        report.comments.push({
+          id: comment.comment_id,
+          text: comment.comment_text,
+          user_id: comment.comment_user_id,
+          username: comment.comment_username,
+          profile_image: comment.comment_profile_image,
+          name: comment.comment_name,
+        });
+      }
+    }
+
+    // Documents
+    const documentsResult = await client.query(
+      `
+      SELECT 
+        report_id, file_name, file_type, s3_url
+      FROM report_documents
+      WHERE report_id = ANY($1)
+      `,
+      [reportIds]
+    );
+    for (const doc of documentsResult.rows) {
+      const report = reportsMap.get(doc.report_id);
+      if (report) {
+        report.documents.push({
+          file_name: doc.file_name,
+          file_type: doc.file_type,
+          s3_url: doc.s3_url
+        });
+      }
+    }
+
+    // Videos
+    const videosResult = await client.query(
+      `
+      SELECT 
+        report_id, file_name, file_type, s3_url
+      FROM report_videos
+      WHERE report_id = ANY($1)
+      `,
+      [reportIds]
+    );
+    for (const video of videosResult.rows) {
+      const report = reportsMap.get(video.report_id);
+      if (report) {
+        report.videos.push({
+          file_name: video.file_name,
+          file_type: video.file_type,
+          s3_url: video.s3_url
+        });
+      }
+    }
+
+    res.json({ success: true, reports: Array.from(reportsMap.values()) });
   } catch (e) {
     console.error("Failed to get user posts", e);
     res
