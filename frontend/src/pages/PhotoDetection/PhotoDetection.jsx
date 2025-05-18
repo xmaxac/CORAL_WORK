@@ -667,7 +667,7 @@ const PhotoDetection = () => {
             </CardContent>
           ) : selectedOption === "yolo" && yoloResult ? (
             <CardContent className="felx flex-col items-center">
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <h3 className="text-lg font-semibold mb-2">
                   YOLO Detection Result
                 </h3>
@@ -681,7 +681,16 @@ const PhotoDetection = () => {
                   <Eye size={16} />
                   <span>Download YOLO Video</span>
                 </Button>
-              </div>
+              </div> */}
+              {/* TODO: Add ResponseContentDisposition: 'inline' when generating the signed URL*/}
+              <video
+                controls
+                width="100%"
+                src={yoloResult.url}
+                style={{ borderRadius: "8px", marginTop: "20px" }}
+              >
+                Your browser does not support the video tag.
+              </video>
             </CardContent>
           ) : null}
         </Card>
