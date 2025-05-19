@@ -1,127 +1,170 @@
-import {PDFExtract} from 'pdf.js-extract'
-import path from "path";
-import fs from "fs";
+import { PDFExtract } from 'pdf.js-extract';
+import path from 'path';
+import fs from 'fs/promises';
 import dotenv from 'dotenv';
 
-import {createStuffDocumentsChain} from "langchain/chains/combine_documents";
-import { Document } from "langchain/document";
-import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import {createRetrievalChain} from "langchain/chains/retrieval";
+import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
+import { createRetrievalChain } from 'langchain/chains/retrieval';
+import { Document } from 'langchain/document';
+import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
+import { Pool } from 'pg';
 
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-// import { OpenAIEmbeddings } from "@langchain/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-// import {PGVectorStore} from "@langchain/community/vectorstores/pgvector";
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 
-// get text from pdfs
-async function extractTextFromPDF(file_path) {
-    const pdfExtract = new PDFExtract();
-    const buffer = fs.readFileSync(file_path);
-    return new Promise((resolve, reject) => {
-        pdfExtract.extractBuffer(buffer, {}, (err, data) => {
-            if (err) return reject(err);
-            const basename = path.parse(file_path).name;
-            const numPages = data.pages.length;
-            const selectedPages = data.pages.slice(1, numPages - 1);
-            const text = selectedPages.map(page =>
-                page.content.map(item => item.str).join(' ')
-              ).join('\n');
-              resolve({ text, numPages, basename});
-            });
-    }); 
-}
-// write pdf file to text
-// example use: writeToTxt("../embedded_data/Pathology_of_lesions_in_corals_from_the_US_Virgin_.pdf");
-async function writeToTxt(file_path){
-    const {text, numPages, basename} = await extractTextFromPDF(file_path);
-    const textpath = `../embedded_data_txt/${basename}.txt`
-    fs.writeFileSync(textpath, text, "utf-8");
-}
-
-import { ChatOpenAI, OpenAIEmbeddings} from '@langchain/openai';
-import {ChatPromptTemplate} from '@langchain/core/prompts'
 import { fileURLToPath } from 'url';
 
-// get the openaiapi key from .env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-console.log(process.env.OPENAIAPIKEYLC)
 
-const model = new ChatOpenAI({
-    modelName : "gpt-4-turbo" ,
-    temperature: 0,
-    openAIApiKey: process.env.OPENAIAPIKEYLC 
+
+
+// --- PDF text extraction ---
+export async function extractTextFromPDF(filePath) {
+  const pdfExtract = new PDFExtract();
+  const buffer = await fs.readFile(filePath);
+  return new Promise((resolve, reject) => {
+    pdfExtract.extractBuffer(buffer, {}, (err, data) => {
+      if (err) return reject(err);
+      const basename = path.parse(filePath).name;
+      const numPages = data.pages.length;
+      const selectedPages = data.pages.slice(1, numPages - 1);
+      const text = selectedPages
+        .map(page => page.content.map(item => item.str).join(' '))
+        .join('\n');
+      resolve({ text, numPages, basename });
+    });
+  });
+}
+
+export async function writePdfTextToFile(filePath) {
+  const { text, basename } = await extractTextFromPDF(filePath);
+  const textPath = path.resolve(__dirname, '../embedded_data_txt', `${basename}.txt`);
+  await fs.writeFile(textPath, text, 'utf-8');
+}
+
+// --- vector store setup ---
+export async function setupVectorStore() {
+  // Set up Postgres pool
+  const pool = new Pool({
+    host: process.env.PGHOST,
+    port: Number(process.env.PGPORT),
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    ssl: {
+      rejectUnauthorized: false,
+    },
 });
 
-const prompt = ChatPromptTemplate.fromMessages([
+  // sreate embeddings instance
+  const embeddings = new OpenAIEmbeddings({
+    openAIApiKey: process.env.OPENAIAPIKEYLC,
+  });
+
+  // initialize PGVectorStore
+  const vectorStore = await PGVectorStore.initialize(embeddings, {
+    pool,
+    tableName: 'vector_docs',
+    columns: {
+      idColumnName: 'id',
+      vectorColumnName: 'embedding',
+      contentColumnName: 'content',
+    },
+  });
+
+  return vectorStore;
+}
+
+// --- load documents from URL ---
+export async function loadDocsFromURL(url) {
+  const loader = new CheerioWebBaseLoader(url);
+  const docs = await loader.load();
+  return docs;
+}
+
+// --- split documents ---
+export async function splitDocuments(docs, chunkSize = 500, chunkOverlap = 50) {
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize,
+    chunkOverlap,
+  });
+  const splitDocs = await splitter.splitDocuments(docs);
+  return splitDocs;
+}
+
+// --- setup LLM model ---
+export function setupModel() {
+  return new ChatOpenAI({
+    streaming: true,
+    callbacks: [
+      {
+        handleLLMNewToken(token) {
+          process.stdout.write(token);
+        },
+      },
+    ],
+    modelName: 'gpt-3.5-turbo',
+    temperature: 0,
+    openAIApiKey: process.env.OPENAIAPIKEYLC,
+  });
+}
+
+// --- setup prompt template ---
+export function setupPrompt() {
+  return ChatPromptTemplate.fromMessages([
     `Answer the user's question. 
     Context: {context}
-    Question: {input}
-    `
-]);
-const loader = new CheerioWebBaseLoader(
-    "https://cdhc.noaa.gov/coral-disease/characterized-diseases/stony-coral-tissue-loss-disease-sctld/"
-)
-const docs = await loader.load()
-const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 200, 
-    chunkOverlap: 20
-})
+    Question: {input}`,
+  ]);
+}
 
-const key = process.env.OPENAIAPIKEYLC
-const embeddings = new OpenAIEmbeddings({apiKey:key})
-const splitDocs = await splitter.splitDocuments(docs);
-const vectorstore = await MemoryVectorStore.fromDocuments(
-    splitDocs, 
-    embeddings
-); 
+// --- main controller handler ---
+export async function chatbotHandler(question) {
+  // 1. setup
+  const model = setupModel();
+  const prompt = setupPrompt();
 
-const documentA = new Document({
-    pageContent: "The spread of SCTLD around the island of St. Thomas and to neighboring islands has been rapid and unrelenting"
-});
-const documentB = new Document({
-    pageContent: "the spread of sctld is higly contagious, starting form the coast of miami and spreading to the carribean."
-})
-const chain = await createStuffDocumentsChain({
-    llm: model, 
-    prompt: prompt
-});
-// retrieve data
-const retriever = vectorstore.asRetriever({
-    k:3
-})
-const retrievalchain = await createRetrievalChain({
-    combineDocsChain: chain, 
-    retriever: retriever
-})
-const response = await retrievalchain.invoke({
-    input: "how is the the spread of sctld in st thomas"
-});
+  // 2. setup vector store connection
+  const vectorStore = await setupVectorStore();
 
-console.log(response);
-// const loader = new CheerioWebBaseLoader()
-// // const chain = prompt.pipe(model);
-// // const response = await chain.invoke({
-// //     input: "what is sctld?"
-// // })
+  // 3. Load documents (e.g. from web or local text files)
+//   const docs = await loadDocsFromURL('https://cdhc.noaa.gov/coral-disease/characterized-diseases/stony-coral-tissue-loss-disease-sctld/');
+//   const splitDocs = await splitDocuments(docs);
+//   await vectorStore.addDocuments(splitDocs);
 
-// // console.log(response);
+  // 4. create retriever and chains
+  const retriever = vectorStore.asRetriever();
 
-// // async function callStringOutputParser(){
-// //     // create prompt template 
-    
+  const chain = await createStuffDocumentsChain({
+    llm: model,
+    prompt,
+  });
 
-// //     const parser = new StructuredOutputParser();
-// //     //create chain
-// //     const chain = prompt.pipe(model).pipe(parser);
-// //     const response = await chain.invoke({
-// //         input: "what is the mortality rate of SCTLD?"
-// //     });
-// //     return response; 
-// // }
+  const retrievalChain = await createRetrievalChain({
+    combineDocsChain: chain,
+    retriever,
+  });
 
+  // 5. run query and return answer
+  const response = await retrievalChain.invoke({
+    input: question,
+  });
 
-// // const result = await callStringOutputParser();
-// // console.log(result);
+  return response.answer;
+}
 
+// test this out if you want!
+(async () => {
+    try {
+      const question = "how fast does sctld spread?";  
+      const answer = await chatbotHandler(question);
+    } catch (error) {
+      console.error("Error running chatbotHandler:", error);
+    } finally {
+      process.exit(0); 
+    }
+  })();
