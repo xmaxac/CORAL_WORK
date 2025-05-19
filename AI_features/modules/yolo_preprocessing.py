@@ -149,7 +149,7 @@ def upload_video_and_generate_presigned_url(temp_file_path, s3_ID, s3_key, s3_RE
         # Generate the presigned URL for the uploaded video (valid for 1 hour)
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': s3_filename},
+            Params={'Bucket': BUCKET_NAME, 'Key': s3_filename, 'ResponseContentDisposition': 'inline'},
             ExpiresIn=3600  # URL will be valid for 1 hour
         )
 

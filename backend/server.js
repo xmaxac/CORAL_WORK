@@ -94,20 +94,20 @@ app.use(
 
 const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: { message: "Too many requests, please try again later."}
 })
 
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 50,
+  max: 100,
   message: {message: "Too many login attempts. Try again later." }
 })
 
 // Middleware configuration
 app.use(cors({
   origin: '*', // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
   credentials: true // Allow credentials (cookies, authorization headers)
 }));
 

@@ -8,8 +8,10 @@ import {
   ChevronRight,
   Clock,
   Map,
+  SearchCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ReportVerification from "./ReportVerification";
 import { AppContext } from "@/context/AppContext";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardFooter } from "../ui/card";
@@ -39,7 +41,9 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
     reef_type,
     average_depth,
     water_temp,
-    group_id
+    group_id,
+    status,
+    verification_note,
   } = report;
   const { username, profile_image, name } = report.user;
   const reportOwnerId = report.user_id;
@@ -47,9 +51,13 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
   const [likesCount, setLikesCount] = useState(Number(likes));
   const isMyPost = reportOwnerId === currentUserId;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDetectionModal, setShowDetectionModal] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [comments, setComments] = useState(report.comments || []);
-  const { url, token } = useContext(AppContext);
+  const { url, token, user } = useContext(AppContext);
+
+  const [reportStatus, setReportStatus] = useState(status);
+  const [reportVerificationNote, setReportVerificationNote] = useState(verification_note || '');
 
   const hasValidPhotos = photos && photos.length > 0 && !photos.includes(null);
   const hasValidDocuments =
@@ -110,6 +118,15 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
     }
   };
 
+  const handleStatusUpdate = (newStatus, newNote) => {
+    setReportStatus(newStatus);
+    setReportVerificationNote(newNote);
+    // If you need to update the parent component
+    if (typeof onStatusUpdate === 'function') {
+      onStatusUpdate(report.id, newStatus, newNote);
+    }
+  };
+
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % photos.length);
   };
@@ -146,14 +163,12 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
         );
         setIsLiked(response.data.isLiked);
       } catch (e) {
-        console.error("Error fetching like status", error);
+        console.error("Error fetching like status", e);
       }
     };
 
     fetchLikeStatus();
   }, [report.id, url, token]);
-
-  console.log(report)
 
   return (
     <Card className="w-full max-w-3xl m-5">
@@ -221,6 +236,22 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
             <Map className="w-4 h-4" />
             <p className="text-sm text-gray-500">{`Location: ${latitude}, ${longitude} - ${countryName}`}</p>
           </div>
+          <div className="flex flex-row items-center gap-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                status === "approved"
+                  ? "bg-green-500"
+                  : status === "under review"
+                  ? "bg-yellow-500"
+                  : status === "rejected"
+                  ? "bg-red-500"
+                  : "bg-gray-500"
+              }`}
+            ></div>
+            <p className="text-sm text-gray-500">
+              {`Status: ${status.toUpperCase()}`}
+            </p>
+          </div>
         </div>
         <div>
           <div className="flex flex-row items-center gap-2">
@@ -240,12 +271,21 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
         {hasValidPhotos && (
           <div className="space-y-2">
             <div className="relative">
-              <div className="relative aspect-video rounded-lg overflow-hidden">
+              <div className="relative group aspect-video rounded-lg overflow-hidden">
                 <img
-                  src={photos[currentImageIndex]}
+                  src={photos[currentImageIndex].photo_url}
                   alt={`${title} - image ${currentImageIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowDetectionModal(true)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white"
+                >
+                  <SearchCheck className="w-4 h-4" />
+                </Button>
               </div>
 
               {photos.length > 1 && (
@@ -269,7 +309,6 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
                 </>
               )}
             </div>
-
             {photos.length > 1 && (
               <div className="flex gap-2 overflow-x-auto py-2">
                 {photos.map((photo, index) => (
@@ -281,7 +320,7 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
                     onClick={() => selectImage(index)}
                   >
                     <img
-                      src={photo}
+                      src={photo.photo_url}
                       alt={`${title} thumbnail ${index + 1}`}
                       className="w-16 h-16 object-cover"
                     />
@@ -342,7 +381,15 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
           </div>
         )}
       </CardContent>
-
+      {user.role === "researcher" && (
+        <ReportVerification
+          reportId={report.id}
+          currentStatus={status}
+          onStatusUpdate={handleStatusUpdate}
+          url={url}
+          token={token}
+        />
+      )}
       <CardFooter>
         <div className="flex gap-6 items-center">
           <Button
@@ -379,6 +426,24 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
           </Button>
         </div>
       </CardFooter>
+      {showDetectionModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-4 max-w-3xl w-full relative">
+            <button
+              onClick={() => setShowDetectionModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-semibold mb-4">AI Detection</h2>
+            <img
+              src={photos[currentImageIndex].photo_detection} // You need to pass this prop or state
+              alt="AI Detection"
+              className="w-full h-auto rounded"
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

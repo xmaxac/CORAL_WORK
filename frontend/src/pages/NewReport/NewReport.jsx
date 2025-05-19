@@ -34,7 +34,7 @@ import {
   Pencil,
   Loader2,
   Waves,
-  File,
+  File as File2,
   Video,
   FileVideo,
 } from "lucide-react";
@@ -133,6 +133,7 @@ const NewReport = () => {
 
   //State to store AI detection of images
   const [ImageDetections, setImageDetections] = useState([]);
+  const [imageDetectionsServer, setImageDetectionsServer] = useState([]);
   const [showDetectionPopup, setShowDetectionPopup] = useState(false);
   const [currentDetectionIndex, setCurrentDetectionIndex] = useState(null);
 
@@ -218,7 +219,18 @@ const NewReport = () => {
 
       const blob = new Blob([response.data], { type: "image/jpeg" });
 
+      const detection_file = new File([blob], "detection.jpg", {
+        type: "image/jpeg",
+      })
+
+      console.log("File:", detection_file)
+
       if (blob.size > 0) {
+        setImageDetectionsServer(prev => {
+          const newDetection = [...prev];
+          newDetection[index] = detection_file;
+          return newDetection;
+        })
         const url = URL.createObjectURL(blob);
         setImageDetections(prev => {
           const newDetections = [...prev];
@@ -226,7 +238,6 @@ const NewReport = () => {
           return newDetections;
         });
       }
-
       return response.data;
     } catch (e) {
       console.error("AI Dectection Error:", e);
@@ -403,6 +414,11 @@ const NewReport = () => {
 
       selectedVids.forEach((vid) => {
         formData.append("videos", vid.file);
+      })
+
+      imageDetectionsServer.forEach((image) => {
+        formData.append("imageDetections", image)
+        console.log(image)
       })
 
       formData.append("group_id", selectedGroupId)
@@ -820,7 +836,7 @@ const NewReport = () => {
                                 onClick={() => fileInputRef.current?.click()}
                                 className="flex items-center gap-2"
                               >
-                                <File size={16} />
+                                <File2 size={16} />
                                 Add Documents
                               </Button>
                               <span className="text-sm text-gray-500">

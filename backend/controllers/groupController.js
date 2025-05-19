@@ -67,6 +67,7 @@ export const getGroupById = async (req, res) => {
 export const getReports = async (req, res) => {
   const client = await pool.connect();
   const { groupId } = req.params;
+
   try {
     const result = await client.query(
       `
@@ -76,7 +77,16 @@ export const getReports = async (req, res) => {
           c.id AS comment_id, c.comment AS comment_text, c.user_id AS comment_user_id,
           cu.username AS comment_username, cu.profile_image AS comment_profile_image, cu.name AS comment_name,
           COALESCE(likes_count.likes, 0) AS likes,
-          array_agg(rp.photo_url) AS report_photo_urls,
+
+          (
+            SELECT json_agg(jsonb_build_object(
+              'photo_url', rp.photo_url,
+              'photo_detection', rp.photo_detection
+            ))
+            FROM report_photos rp
+            WHERE rp.report_id = r.id
+          ) AS photos,
+
           COALESCE(
             json_agg(
               DISTINCT jsonb_build_object(
@@ -84,7 +94,9 @@ export const getReports = async (req, res) => {
                 'file_type', rd.file_type,
                 's3_url', rd.s3_url
               )
-          ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS documents,
+            ) FILTER (WHERE rd.id IS NOT NULL), '[]'
+          ) AS documents,
+
           COALESCE(
             json_agg(
               DISTINCT jsonb_build_object(
@@ -92,7 +104,9 @@ export const getReports = async (req, res) => {
                 'file_type', rv.file_type,
                 's3_url', rv.s3_url
               )
-          ) FILTER (WHERE rv.id IS NOT NULL), '[]') AS videos
+            ) FILTER (WHERE rv.id IS NOT NULL), '[]'
+          ) AS videos
+
         FROM reports r
         JOIN users u ON r.user_id = u.id
         LEFT JOIN report_comments c ON r.id = c.report_id
@@ -102,18 +116,23 @@ export const getReports = async (req, res) => {
           FROM report_likes
           GROUP BY report_id
         ) likes_count ON r.id = likes_count.report_id
-        LEFT JOIN report_photos rp ON r.id = rp.report_id
+
+        -- DO NOT JOIN report_photos here
         LEFT JOIN report_documents rd ON r.id = rd.report_id
         LEFT JOIN report_videos rv ON r.id = rv.report_id
+
         WHERE r.group_id = $1
+
         GROUP BY r.id, r.user_id, r.latitude, r.longitude, r.country_code, r.title, r.description, r.report_date, r.reef_name, r.reef_type, r.average_depth, r.water_temp, r.created_at,
-                u.username, u.profile_image, u.name,
-                c.id, c.comment, c.user_id,
-                cu.username, cu.profile_image, cu.name, likes_count.likes
+                 u.username, u.profile_image, u.name,
+                 c.id, c.comment, c.user_id,
+                 cu.username, cu.profile_image, cu.name, likes_count.likes
+
         ORDER BY r.created_at DESC
       `,
       [groupId]
     );
+
     const reportsMap = new Map();
 
     result.rows.forEach((row) => {
@@ -132,7 +151,7 @@ export const getReports = async (req, res) => {
           reef_type: row.reef_type,
           average_depth: row.average_depth,
           water_temp: row.water_temp,
-          photos: row.report_photo_urls || [],
+          photos: row.photos || [],
           documents: row.documents || [],
           videos: row.videos || [],
           groupId: groupId,
@@ -158,16 +177,18 @@ export const getReports = async (req, res) => {
       }
     });
 
-    res
-      .status(200)
-      .json({ success: true, reports: Array.from(reportsMap.values()) });
+    res.status(200).json({
+      success: true,
+      reports: Array.from(reportsMap.values()),
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Failed to fetch group reports", err);
     res.status(500).json({ error: "Failed to fetch reports" });
   } finally {
     client.release();
   }
 };
+
 
 export const deleteGroup = async (req, res) => {
   const client = await pool.connect();
