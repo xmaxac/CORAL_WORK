@@ -1,6 +1,6 @@
 {
   "name": "@aws-sdk/util-arn-parser",
-  "version": "3.723.0",
+  "version": "3.804.0",
   "description": "A parser to Amazon Resource Names",
   "main": "./dist-cjs/index.js",
   "module": "./dist-es/index.js",
@@ -29,7 +29,7 @@
     "concurrently": "7.0.0",
     "downlevel-dts": "0.10.1",
     "rimraf": "3.0.2",
-    "typescript": "~5.2.2"
+    "typescript": "~5.8.3"
   },
   "types": "./dist-types/index.d.ts",
   "engines": {

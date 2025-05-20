@@ -123,48 +123,51 @@ export function setupPrompt() {
 }
 
 // --- main controller handler ---
-export async function chatbotHandler(question) {
-  // 1. setup
-  const model = setupModel();
-  const prompt = setupPrompt();
+export async function chatbotHandler(req, res) {
+  try {
+    // 1. setup
+    const model = setupModel();
+    const prompt = setupPrompt();
+    const vectorStore = await setupVectorStore();
+    const retriever = vectorStore.asRetriever();
 
-  // 2. setup vector store connection
-  const vectorStore = await setupVectorStore();
+    const chain = await createStuffDocumentsChain({
+      llm: model,
+      prompt,
+    });
 
-  // 3. Load documents (e.g. from web or local text files)
-//   const docs = await loadDocsFromURL('https://cdhc.noaa.gov/coral-disease/characterized-diseases/stony-coral-tissue-loss-disease-sctld/');
-//   const splitDocs = await splitDocuments(docs);
-//   await vectorStore.addDocuments(splitDocs);
+    const retrievalChain = await createRetrievalChain({
+      combineDocsChain: chain,
+      retriever,
+    });
 
-  // 4. create retriever and chains
-  const retriever = vectorStore.asRetriever();
+    // 2. get question and validate it
+    const { question } = req.body;
 
-  const chain = await createStuffDocumentsChain({
-    llm: model,
-    prompt,
-  });
+    if (typeof question !== 'string') {
+      return res.status(400).json({ error: 'Question must be a string' });
+    }
 
-  const retrievalChain = await createRetrievalChain({
-    combineDocsChain: chain,
-    retriever,
-  });
+    // 3. run chain
+    const result = await retrievalChain.invoke({ input: question });
 
-  // 5. run query and return answer
-  const response = await retrievalChain.invoke({
-    input: question,
-  });
-
-  return response.answer;
+    // 4. respond
+    return res.json({ answer: result.answer });
+  } catch (err) {
+    console.error("Chatbot handler error:", err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
 
+
 // test this out if you want!
-(async () => {
-    try {
-      const question = "how fast does sctld spread?";  
-      const answer = await chatbotHandler(question);
-    } catch (error) {
-      console.error("Error running chatbotHandler:", error);
-    } finally {
-      process.exit(0); 
-    }
-  })();
+// (async () => {
+//     try {
+//       const question = "how fast does sctld spread?";  
+//       const answer = await chatbotHandler(question);
+//     } catch (error) {
+//       console.error("Error running chatbotHandler:", error);
+//     } finally {
+//       process.exit(0); 
+//     }
+//   })();

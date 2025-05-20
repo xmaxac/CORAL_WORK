@@ -38,14 +38,13 @@ const ChatbotPopup = ({setShowChatbot}) => {
 
       // Send request to the chatbot backend API
       const response = await axios.post(`${url}/api/chatbot/message`, {
-        messages: [...messages, { role: 'user', content: userMessage }]
+        question: userMessage
       });
 
       if (response.status !== 200) throw new Error('Failed to send message');
 
       // Extract response data and add chatbot reply to the chat
-      const data = await response.data;
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: response.data.answer }]);
     } catch (e) {
       console.error('Error:', e);
       setMessages(prev => [...prev, {
