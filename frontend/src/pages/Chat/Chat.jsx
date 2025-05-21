@@ -61,7 +61,11 @@ const Chat = ({
 
   // Initialize socket connection
   useEffect(() => {
-    socketRef.current = io("http://localhost:4000", {
+    if (!socketRef.current) {
+      
+    }
+
+    socketRef.current = io(url, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

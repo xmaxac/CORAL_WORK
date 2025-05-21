@@ -35,7 +35,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 // Required libraries for Google Maps
-const libraries = ["places"];
+const libraries = ["places", "visualization"];
 
 const DataPage = () => {
   // Navigation function to change page
@@ -60,7 +60,7 @@ const DataPage = () => {
   const { t } = useTranslation();
 
   // Effect that runs when component loads or when dependencies change
-  useEffect(() => {
+    useEffect(() => {
     // Get user's current location for map centering
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -70,8 +70,13 @@ const DataPage = () => {
         },
         (error) => {
           console.error("Error getting current location:", error);
+          // Default to a central position if geolocation fails
+          setPos({ lat: 20, lng: 0 });
         }
       );
+    } else {
+      // Default position if geolocation is not available
+      setPos({ lat: 20, lng: 0 });
     }
 
     // Fetch country data for bar chart
@@ -86,7 +91,7 @@ const DataPage = () => {
 
         setChartData(data);
       } catch (e) {
-        console.error("Error fecthing data:", e);
+        console.error("Error fetching data:", e);
       }
     };
 
@@ -118,6 +123,19 @@ const DataPage = () => {
 
         if (Array.isArray(data)) {
           setLocations(data);
+          
+          // Process data for heatmap once we have locations
+          if (window.google && data.length > 0) {
+            const heatmapPoints = data.map(loc => ({
+              location: new window.google.maps.LatLng(
+                parseFloat(loc.latitude),
+                parseFloat(loc.longitude)
+              ),
+              // You can assign different weights based on status or other properties
+              weight: loc.status === "approved" ? 2 : 1,
+            }));
+            setHeatMapData(heatmapPoints);
+          }
         } else {
           console.error("Expected an array but got:", data);
         }
@@ -189,7 +207,14 @@ const DataPage = () => {
                       <Map size={20} />
                       <span>{t("data.map.title")}</span>
                     </div>
-                    <button onClick={() => setShowHeatMap((prev) => !prev)}>
+                    <button 
+                      onClick={() => setShowHeatMap((prev) => !prev)}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        showHeatMap 
+                          ? "bg-blue-100 text-blue-800 hover:bg-blue-200" 
+                          : "bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
+                      }`}
+                    >
                       {showHeatMap ? "Show Markers" : "Show Heatmap"}
                     </button>
                   </CardTitle>
@@ -199,7 +224,7 @@ const DataPage = () => {
                     {/* Google Maps Component */}
                     <LoadScript
                       googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY}
-                      libraries={["visualization", ...libraries]}
+                      libraries={libraries}
                     >
                       <GoogleMap
                         mapContainerStyle={{ height: "100%", width: "100%" }}
@@ -207,35 +232,43 @@ const DataPage = () => {
                         zoom={6.5}
                         onLoad={(map) => {
                           mapRef.current = map;
-
-                          const google = window.google;
-
-                          const data = locations.map((loc) => ({
-                            location: new google.maps.LatLng(
-                              parseFloat(loc.latitude),
-                              parseFloat(loc.longitude)
-                            ),
-                            weight: 1, // or custom weight
-                          }));
-
-                          setHeatMapData(data);
+                          
+                          // Only create heatmap data if google is available and locations exist
+                          if (window.google && locations.length > 0) {
+                            // Create heatmap data points from all locations
+                            const data = locations.map((loc) => ({
+                              location: new window.google.maps.LatLng(
+                                parseFloat(loc.latitude),
+                                parseFloat(loc.longitude)
+                              ),
+                              // Assign weights based on report status 
+                              weight: loc.status === "approved" ? 5 : 
+                                      loc.status === "under review" ? 3 : 
+                                      loc.status === "rejected" ? 1 : 2,
+                            }));
+                            setHeatMapData(data);
+                          }
                         }}
                       >
                         {showHeatMap && heatMapData.length > 0 ? (
                           <HeatmapLayer
                             data={heatMapData}
                             options={{
-                              radius: 80, // Spread size
+                              radius: 50, // Spread size
+                              opacity: 0.8,
                               dissipating: true,
-                              opacity: 0.6,
+                              maxIntensity: 10,
                               gradient: [
-                                "rgba(0, 0, 255, 0)", // Transparent blue
-                                "rgba(0, 0, 255, 0.5)", // Light blue
-                                "rgba(0, 255, 255, 0.7)", // Cyan
-                                "rgba(0, 255, 0, 0.7)", // Green
-                                "rgba(255, 255, 0, 0.7)", // Yellow
-                                "rgba(255, 0, 0, 1.0)", // Red
-                              ],
+                                'rgba(255, 255, 255, 0)',    // Transparent white (no intensity)
+                                'rgba(255, 255, 0, 0.4)',    // Light yellow
+                                'rgba(255, 165, 0, 0.6)',    // Orange
+                                'rgba(255, 140, 0, 0.8)',    // Darker orange
+                                'rgba(255, 69, 0, 0.9)',     // Red-orange
+                                'rgba(255, 0, 0, 1)',        // Red
+                                'rgba(200, 0, 0, 1)',        // Dark red
+                                'rgba(139, 0, 0, 1)',        // Deep crimson
+                                'rgba(128, 0, 128, 1)'       // Purple (for very high intensity)
+                              ]
                             }}
                           />
                         ) : (
@@ -285,15 +318,11 @@ const DataPage = () => {
 
                                   <CardContent className="space-y-2">
                                     {/* Image or Carousel */}
-                                    {/* TODO:Fix photos because they are using old response */}
-                                    {selectedLocation.photos.photo_url &&
-                                      selectedLocation.photos.length &&
-                                      selectedLocation.photos != null > 0 &&
+                                    {selectedLocation.photos && 
+                                      selectedLocation.photos.length > 0 &&
                                       (selectedLocation.photos.length === 1 ? (
                                         <img
-                                          src={
-                                            selectedLocation.photos.photo_url[0]
-                                          }
+                                          src={selectedLocation.photos[0].photo_url}
                                           alt={selectedLocation.title}
                                           className="rounded-md w-full h-40 object-cover"
                                         />
@@ -307,7 +336,7 @@ const DataPage = () => {
                                             (photo, i) => (
                                               <div key={i}>
                                                 <img
-                                                  src={photo}
+                                                  src={photo.photo_url}
                                                   alt={`${
                                                     selectedLocation.title
                                                   } ${i + 1}`}
