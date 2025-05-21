@@ -39,7 +39,7 @@ Coral reefs are one of the most important ecosystems on the planet, supporting 2
 | **Database**      | PostgreSQL (AWS RDS) |
 | **Caching**       | Redis (AWS ElastiCache) |
 | **Storage**       | AWS S3 (for image & document uploads) |
-| **AI/ML**        | TensorFlow, Ultralytics (YOLOv8), OpenCV|
+| **AI/ML**        | TensorFlow, Pytorch
 | **Deployment**    | Docker, AWS ECS, AWS S3 + Cloudfront |
 
 ## Installation & Setup  
