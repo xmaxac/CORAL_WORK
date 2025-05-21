@@ -1,63 +1,160 @@
 # 🌊 CoralBase – A Platform for Stony Coral Tissue Loss Disease Research  
-### [Click here to view the CoralBase Research Portfolio!](https://osceolak12-my.sharepoint.com/:w:/g/personal/5047528_student_osceolaschools_net/EaL1SjSILYNHthF8On6rpFUB0c033oUMq2zt3x2KnnJYdA?e=dK1LMb)
+
+### [🔗 View the CoralBase Research Portfolio](https://osceolak12-my.sharepoint.com/:w:/g/personal/5047528_student_osceolaschools_net/EaL1SjSILYNHthF8On6rpFUB0c033oUMq2zt3x2KnnJYdA?e=dK1LMb)
+
+---
+
+## Table of Contents
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Features](#-features)
+  - [AI-Powered Disease Detection](#-ai-powered-disease-detection)
+  - [Interactive Reporting & Visualization](#-interactive-reporting--visualization)
+  - [AI Chatbot Assistant](#-ai-chatbot-assistant)
+  - [Report Groups (Subreddit-Style)](#-report-groups-subreddit-style)
+  - [Report Review & Moderation](#-report-review--moderation)
+  - [User-to-User Chat](#-user-to-user-chat)
+  - [Security Enhancements](#-security-enhancements)
+- [Tech Stack](#-tech-stack)
+- [AI Model Overview](#-ai-model-overview)
+- [Installation & Setup](#-installation--setup)
+- [Summary](#-summary)
+
+---
+
 ## Overview  
-CoralBase is an open-source web platform that helps researchers, conservationists, and marine biologists track, analyze, and combat Stony Coral Tissue Loss Disease (SCTLD). Using AI-powered image recognition, crowdsourced data, and interactive visualizations, CoralBase enables better detection and understanding of coral diseases.  
+CoralBase is an open-source web platform that helps researchers, conservationists, and marine biologists track, analyze, and combat **Stony Coral Tissue Loss Disease (SCTLD)**. It combines **AI-based detection**, **crowdsourced reporting**, **real-time mapping**, and **research collaboration tools** to streamline coral disease research and response.
+
+Unlike static databases, CoralBase actively verifies reports using AI, supports multimedia, enables community moderation, and provides meaningful data insights.
+
+---
 
 ## Problem Statement  
-Coral reefs are one of the most important ecosystems on the planet, supporting 25% of marine life, protecting coastal areas, and contributing to global biodiversity. However, SCTLD has been devastating reefs, spreading across the Caribbean and beyond. Despite its severity, tracking SCTLD remains a major challenge due to limited data-sharing platforms and real-time analysis tools.
+SCTLD is one of the most aggressive and fast-spreading threats to coral reefs across the Caribbean and Western Atlantic. Despite the ecological importance of coral reefs, **accurate disease tracking and data sharing remain fragmented and outdated**.
 
-### **CoralBase solves this by:**  
-✅ Providing a centralized research hub for SCTLD studies.  
-✅ Automating disease identification using AI-powered image and video recognition.  
-✅ Enabling data-driven conservation efforts through interactive visualizations.  
-✅ Fostering collaboration among marine researchers worldwide.  
+### CoralBase directly addresses this by:
+- Offering an **AI-enhanced disease reporting system**.
+- Providing **real-time, geospatial visualizations**.
+- Encouraging **community science and collaboration**.
+- Supporting **verified data collection and researcher feedback**.
 
-## 🚀 Features  
-### AI-Powered Disease Detection
-- Uses computer vision to analyze uploaded coral images/videos and detect signs of SCTLD.  
-- Provides confidence scores and highlights affected areas.  
+---
 
-### **Research Database**  
-- Allows researchers to upload and search reports. 
+## Features  
 
-### **Interactive Disease Maps**  
-- Displays real-time coral disease spread using geotagged data.  
-- Allows users to visualize locations of reports saved within the databse.  
+### AI-Powered Disease Detection  
+- Uses **YOLOv8** for fast, accurate detection of SCTLD in uploaded coral **images and videos**.  
+- Supports **batch image analysis** with real-time confidence scoring.  
+- Submitted photos are **auto-verified before report submission**.  
+- Bounding boxes identify infected areas with high precision.  
 
-### **Graphs & Analytics**  
-- Generates visual reports on number of reports per country, and recent reports.  
+---
 
-### **Community Collaboration**  
-- Researchers can discuss findings, comment on studies, and share insights.
-- Encourages crowdsourced data collection from divers, marine biologists, and conservationists.  
+### Interactive Reporting & Visualization  
+- Submit **geotagged reports** with images, videos, and documents.  
+- View SCTLD spread via **interactive maps**, and **heatmaps**.  
+- Filter data by **location**.  
+- Includes graphs for recent activity, report count by country, and more.
 
-## 🏗 Tech Stack  
+---
+
+### AI Chatbot Assistant  
+- Powered by OpenAI GPT models.  
+- Sources answers **only from verified CoralBase data**.  
+- Helps users explore research, understand trends, and get guidance.  
+- Fully integrated into the user dashboard for instant support.
+
+---
+
+### Report Groups (Subreddit-Style)  
+- Users can join or create **groups based on region, topic, or research focus**.  
+- Each group has a **dedicated report feed**, discussions, and moderation.  
+- Encourages focused collaboration while staying part of the wider network.
+
+---
+
+### Report Review & Moderation  
+- Researchers can **approve, or deny** reports.    
+- Community moderation tools include **commenting, voting, and flagging**.  
+- Designed to keep the dataset **clean, trustworthy, and scientifically usable**.
+
+---
+
+### User-to-User Chat  
+- Users can **privately message** others within the platform.  
+- Includes **typing indicators, read receipts**, and **rate limiting**.  
+- Useful for **collaborative research**, verification discussions, or organizing dives.
+
+---
+
+### Security Enhancements  
+- Enforced **Content Security Policy (CSP)**.  
+- **API rate limiting** across endpoints to prevent abuse.  
+- Uses **JWT-based auth** with full role separation between users, researchers, and admins.  
+- Secure AWS S3 media storage with limited-access keys.
+
+---
+
+## Tech Stack  
+
 | **Component**      | **Technology** |
-|--------------------|---------------|
-| **Frontend**      | React, Tailwind CSS |
-| **Backend**       | Node.js, Express |
-| **Database**      | PostgreSQL (AWS RDS) |
-| **Caching**       | Redis (AWS ElastiCache) |
-| **Storage**       | AWS S3 (for image & document uploads) |
-| **AI/ML**        | TensorFlow, Pytorch
-| **Deployment**    | Docker, AWS ECS, AWS S3 + Cloudfront |
+|--------------------|----------------|
+| **Frontend**       | React, Tailwind CSS |
+| **Backend**        | Node.js, Express |
+| **Database**       | PostgreSQL (AWS RDS) |
+| **Storage**        | AWS S3 (images, videos, docs) |
+| **AI/ML**          | YOLOv8 (PyTorch) |
+| **Deployment**     | Docker, **AWS Lightsail** (Backend), AWS S3 + CloudFront (Frontend) |
+
+---
+
+## AI Model Overview  
+
+| Task                    | Model    | Metric         |
+|-------------------------|----------|----------------|
+| Coral Detection         | YOLOv8   | 92% mAP@0.5    |
+| SCTLD Classification    | YOLOv8   | 94% Precision  |
+
+> YOLOv8 is now the only detection model used for better speed and accuracy.
+
+---
 
 ## Installation & Setup  
-To run CoralBase locally:  
+
+To run CoralBase locally:
 
 ### 1️⃣ Clone the Repository 
 ```bash
 git clone https://github.com/xmaxc/TSA_SOFTWARE_DEVELOPMENT_CORAL.git
+cd TSA_SOFTWARE_DEVELOPMENT_CORAL
 ```
 
 ### 2️⃣ Set Up Environment Variables
-Create a .env file in the root directory and add the necessary AWS, database, and API keys.
+Create a .env file in both /frontend and /backend and fill in the following:
+- AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+- DATABASE_URL (PostgreSQL connection string)
+- OPENAI_API_KEY (for AI chatbot access)
+- JWT_SECRET (used for user authentication)
+- etc
 
-### 3️⃣ Start Frontend
+### 3️⃣ Start Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+### 4️⃣ Start Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Now visit: http://localhost:5173 OR
-To access online: https://coralbase.net (make an account first to access all features)!
+
+### Access Locally
+### [localhost](http://localhost:5173)
+
+### Access Online
+### [CoralBase](coralbase.net)
+Account required for full feature access (report creation, AI tools, chat system, group discussions, etc.)
+
