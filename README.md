@@ -155,6 +155,6 @@ npm run dev
 [localhost](http://localhost:5173)
 
 ### Access Online
-[CoralBase](coralbase.net)
+[CoralBase](https://coralbase.net)
 > Account required for full feature access (report creation, AI tools, chat system, group discussions, etc.)
 
