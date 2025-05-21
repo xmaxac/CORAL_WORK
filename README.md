@@ -1,6 +1,6 @@
 # 🌊 CoralBase – A Platform for Stony Coral Tissue Loss Disease Research  
 
-### [🔗 View the CoralBase Research Portfolio](https://osceolak12-my.sharepoint.com/:w:/g/personal/5047528_student_osceolaschools_net/EaL1SjSILYNHthF8On6rpFUB0c033oUMq2zt3x2KnnJYdA?e=dK1LMb)
+### [🔗 View the CoralBase Research Portfolio](https://drive.google.com/file/d/1OWrwFZrMstYnnVN8LTCXvmw1XLf2qcQX/view?usp=sharing)
 
 ---
 
