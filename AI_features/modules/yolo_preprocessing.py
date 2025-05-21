@@ -84,7 +84,7 @@ def getPredictionInfo_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, con
     if result is not None:
         images, boxes, image_array = result
 
-        # Initialize the lists to avoid UnboundLocalError
+        # Initialize the lists
         filtered_images = []
         filtered_predictions = []
         filtered_labels = []
@@ -114,34 +114,52 @@ def getPredictionInfo_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, con
         return [], [], [], [], [], image_array
     
 def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0,  conf_threshold_scltdcnn=0.0):
-  images_sctld = []
-  confidence_scores_sctld = []
-  boxes_sctld = []
-  images, predictions, prediction_labels, confidence_scores, boxes, image_array = getPredictionInfo_sctldcnnxyolo(model_sctldcnn=model_sctldcnn, model_yolo=model_yolo, image_array=image_array, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn)
-  image_array = imgp.convert_color_type(image_array)
-  if len(images) == 0:
-    return imgp.convert_color_type(image_array)
-  for i in range(len(images)):
-    if prediction_labels[i] == 0:
-      images_sctld.append(images[i])
-      confidence_scores_sctld.append(confidence_scores[i])
-      boxes_sctld.append(boxes[i])
-  for xyxy, conf, image in zip(boxes_sctld, confidence_scores_sctld, images_sctld):
-    xy1 = (int(xyxy[0]), int(xyxy[1]))
-    xy2 = (int(xyxy[2]), int(xyxy[3]))
-    cv2.rectangle(image_array, xy1, xy2, color, thickness)
+    images_sctld = []
+    confidence_scores_sctld = []
+    boxes_sctld = []  
+    images, predictions, prediction_labels, confidence_scores, boxes, image_array = getPredictionInfo_sctldcnnxyolo(model_sctldcnn=model_sctldcnn, model_yolo=model_yolo, image_array=image_array, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn)
+    affected_area = 0
+    total_area = 0
+    for box in boxes: 
+        x1, y1, x2, y2 = map(int, box.tolist())
+        area = (x2 - x1) * (y2 - y1)
+        total_area += area
+        
+    image_array = imgp.convert_color_type(image_array)
+    if len(images) == 0:
+        return imgp.convert_color_type(image_array)
+    for i in range(len(images)):
+        if prediction_labels[i] == 0:
+            images_sctld.append(images[i])
+            confidence_scores_sctld.append(confidence_scores[i])
+            boxes_sctld.append(boxes[i])
 
-    label = f"SCTLD {conf:.2f}"
+    for box in boxes_sctld: 
+        x1, y1, x2, y2 = map(int, box)
+        area = area = (x2 - x1) * (y2 - y1)
+        affected_area += area
+    if total_area > 0:
+        coral_coverage_loss = (affected_area / total_area) * 100
+    else:
+        coral_coverage_loss = 0
 
-    # Get text size for background rectangle
-    (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
-    label_bg_xy1 = xy1
-    label_bg_xy2 = (xy1[0] + text_width + 4, xy1[1] - text_height - 4)
+    print("coverage loss: " + str(coral_coverage_loss))
+    for xyxy, conf, image in zip(boxes_sctld, confidence_scores_sctld, images_sctld):
+        xy1 = (int(xyxy[0]), int(xyxy[1]))
+        xy2 = (int(xyxy[2]), int(xyxy[3]))
+        cv2.rectangle(image_array, xy1, xy2, color, thickness)
 
-    # Draw the class and confidence score in the bounding box
-    cv2.rectangle(image_array, label_bg_xy1, label_bg_xy2, color, -1)
-    cv2.putText(image_array, label, (xy1[0] + 2, xy1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
-    return imgp.convert_color_type(image_array)
+        label = f"SCTLD {conf:.2f}"
+
+        # Get text size for background rectangle
+        (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
+        label_bg_xy1 = xy1
+        label_bg_xy2 = (xy1[0] + text_width + 4, xy1[1] - text_height - 4)
+
+        # Draw the class and confidence score in the bounding box
+        cv2.rectangle(image_array, label_bg_xy1, label_bg_xy2, color, -1)
+        cv2.putText(image_array, label, (xy1[0] + 2, xy1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
+    return imgp.convert_color_type(image_array), coral_coverage_loss
 
 def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold=0.5, tracker_config="bytetrack.yaml"):
     results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
@@ -180,18 +198,20 @@ def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239
     return imgp.convert_color_type(image_array), len(unique_ids) 
 
 
+
 def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.5, conf_threshold_scltd=0.7, tracker_config="bytetrack.yaml"):
     CLASSES = ["SCTLD", "Coral"]
+    total_area = 0 
+    affected_area = 0
     results = model_yolo.track(image_array, show=False, persist=True, tracker=tracker_config)
 
     if results is None or results[0].boxes.id is None:
-        return image_array
+        return image_array, 0, 0, 0
     
     
     boxes_xyxy = results[0].boxes.xyxy.cpu()
     confs = results[0].boxes.conf.cpu()
     ids = results[0].boxes.id.cpu()
-
 
     valid_indices = confs >= conf_threshold_yolo
     boxes_xyxy = boxes_xyxy[valid_indices]
@@ -208,8 +228,10 @@ def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image
     for box, track_id in zip(boxes_xyxy, ids):
         x1, y1, x2, y2 = map(int, box.tolist())
         cropped_region = image_array[y1:y2, x1:x2]
+        box_area = (x2 - x1) * (y2 - y1)
 
         if cropped_region.size > 0:
+            total_area += box_area
             cropped_image_arrays[int(track_id)] = cropped_region
             track_ids.append(int(track_id))
 
@@ -223,7 +245,7 @@ def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image
         track_id_order.append(track_id)
 
     if not images:
-        return image_array
+        return image_array, 0, 0, 0
 
     batch_of_images = np.stack(images, axis=0)
     predictions = model_sctldcnn.predict(batch_of_images)
@@ -234,15 +256,24 @@ def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image
         track_id = track_id_order[i]
 
         if confidence_score >= conf_threshold_scltd and predicted_class == 0:
+            affected_area += box_area
             # Draw results back on the original image
             box_idx = track_ids.index(track_id)
             x1, y1, x2, y2 = map(int, boxes_xyxy[box_idx].tolist())
-
             label = f"ID {track_id} | SCTLD: ({round(confidence_score * 100, 2)}%)"
             cv2.rectangle(image_array, (x1, y1), (x2, y2), color, thickness)
             cv2.putText(image_array, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
                         font_scale, color, font_thickness)
-    return image_array
+            
+    # final coverage loss calculation 
+    if total_area > 0: 
+        coral_coverage_loss = (affected_area / total_area) * 100
+    else:
+        coral_coverage_loss = 0
+    return image_array, coral_coverage_loss, total_area, affected_area
+
+
+
 def generate_random_string(length=12):
     """Generate a random alphanumeric string of specified length."""
     characters = string.ascii_letters + string.digits  # Letters + digits
@@ -313,3 +344,48 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
     os.remove(temp_output_path)
 
     return presigned_url
+
+def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldcnn, video_path, s3_ID, s3_key, s3_REGION, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0, frame_skip=5):
+    load_dotenv()
+    unique_ids = set()
+    # Check if .env variables are loaded
+    if not all([os.getenv("ID"), os.getenv("KEY"), os.getenv("REGION")]):
+        raise ValueError("Missing AWS credentials or region in .env file")
+
+    cap = cv2.VideoCapture(video_path)
+    frame_skip = frame_skip 
+    frame_count = 0
+
+    temp_output_path = tempfile.mktemp(suffix=".mp4")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(temp_output_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
+    total_coral_area = 0 
+    total_affected_area = 0
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_count % frame_skip == 0:
+            processed_frame, coral_coverage_loss, total_area, affected_area = draw_prediction_sctldcnn_track(unique_ids=unique_ids, model_yolo=model_yolo, model_sctldcnn=model_sctldcnn, image_array=frame, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltd=conf_threshold_scltdcnn, color=color, thickness=font_thickness, font_scale=font_scale)
+            out.write(processed_frame)
+            total_coral_area +=total_area
+            total_affected_area+=affected_area
+        frame_count += 1
+
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+    coral_coverage_loss_total =(total_affected_area / total_coral_area ) * 100
+
+
+    BUCKET_NAME = "yolo-sctld-bucket"
+    presigned_url = upload_video_and_generate_presigned_url(temp_output_path, s3_ID, s3_key, s3_REGION, BUCKET_NAME)
+
+
+    os.remove(temp_output_path)
+
+    return presigned_url, coral_coverage_loss_total
+
