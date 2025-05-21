@@ -9,40 +9,40 @@ import random
 import string
 
 CLASSES = ["SCTLD", "Coral"]
+CLOUDFRONT_DIST = "https://d7tccbolfojm.cloudfront.net/"
 def call(): 
     print("yolo_preprocessing module called!")
 
-def getPredictionInfo(model, image_array, conf_threshold=0.0, tracking=False):
+def getPredictionInfo(model, image_array, conf_threshold=0.0):
     if image_array is None:
         raise ValueError("Could not load the image. Check the path.")
 
-    if tracking == True:
-        results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
-        if results is not None:
-            boxes = results[0].boxes.xyxy.cpu().numpy()
-            confs = results[0].boxes.conf.cpu().numpy()
-            ids =  results[0].boxes.id
+    # if tracking == True:
+    #     results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
+    #     if results is not None:
+    #         boxes = results[0].boxes.xyxy.cpu().numpy()
+    #         confs = results[0].boxes.conf.cpu().numpy()
+    #         ids =  results[0].boxes.id
 
-        if ids is not None:
-            valid_indices = confs >= 0.6
-            boxes = boxes[valid_indices]
-            confs = confs[valid_indices]
-            ids = ids[valid_indices]
-        return results, boxes, confs, ids, image_array
+    #     if ids is not None:
+    #         valid_indices = confs >= 0.6
+    #         boxes = boxes[valid_indices]
+    #         confs = confs[valid_indices]
+    #         ids = ids[valid_indices]
+    #     return results, boxes, confs, ids, image_array
 
-    else:
-        results = model.predict(image_array)
+    results = model.predict(image_array)
 
-        boxes = results[0].boxes.xyxy.cpu().numpy()
-        confidences = results[0].boxes.conf.cpu().numpy()
-        class_ids = results[0].boxes.cls.cpu().numpy()
+    boxes = results[0].boxes.xyxy.cpu().numpy()
+    confidences = results[0].boxes.conf.cpu().numpy()
+    class_ids = results[0].boxes.cls.cpu().numpy()
 
-        valid_indices = confidences >= conf_threshold
-        boxes = boxes[valid_indices]
-        confidences = confidences[valid_indices]
-        class_ids = class_ids[valid_indices]
+    valid_indices = confidences >= conf_threshold
+    boxes = boxes[valid_indices]
+    confidences = confidences[valid_indices]
+    class_ids = class_ids[valid_indices]
 
-        return results, boxes, confidences, class_ids, image_array
+    return results, boxes, confidences, class_ids, image_array
 
 
 def draw_prediction_yolo(model_yolo, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold=0.0):
@@ -118,14 +118,19 @@ def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color
     confidence_scores_sctld = []
     boxes_sctld = []  
     images, predictions, prediction_labels, confidence_scores, boxes, image_array = getPredictionInfo_sctldcnnxyolo(model_sctldcnn=model_sctldcnn, model_yolo=model_yolo, image_array=image_array, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn)
+    
     affected_area = 0
     total_area = 0
     for box in boxes: 
         x1, y1, x2, y2 = map(int, box.tolist())
         area = (x2 - x1) * (y2 - y1)
         total_area += area
+
+    print(type(image_array))
         
     image_array = imgp.convert_color_type(image_array)
+    print(type(image_array))
+    
     if len(images) == 0:
         return imgp.convert_color_type(image_array)
     for i in range(len(images)):
@@ -159,7 +164,8 @@ def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color
         # Draw the class and confidence score in the bounding box
         cv2.rectangle(image_array, label_bg_xy1, label_bg_xy2, color, -1)
         cv2.putText(image_array, label, (xy1[0] + 2, xy1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
-    return imgp.convert_color_type(image_array), coral_coverage_loss
+
+    return imgp.convert_color_type(image_array)
 
 def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold=0.5, tracker_config="bytetrack.yaml"):
     results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
@@ -292,23 +298,28 @@ def upload_video_and_generate_presigned_url(temp_file_path, s3_ID, s3_key, s3_RE
 
         # Generate a random filename for the video
         s3_filename = generate_random_string(16) + ".mp4"
-
+    
         # Upload the video to S3
-        with open(temp_file_path, 'rb') as data:
-            s3_client.upload_fileobj(data, BUCKET_NAME, s3_filename)
+        s3_client.upload_file(
+        Filename=temp_file_path,  
+        Bucket=BUCKET_NAME,       
+        Key=s3_filename,          
+        ExtraArgs={'ContentType': 'video/mp4'}
+
+        )
+        print("uploaded to s3...")
 
         # Generate the presigned URL for the uploaded video (valid for 1 hour)
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': s3_filename, 'ResponseContentDisposition': 'inline'},
-            ExpiresIn=3600  # URL will be valid for 1 hour
-        )
+        public_url = f"{CLOUDFRONT_DIST}{s3_filename}"
 
-        return presigned_url
+        return public_url
 
     except Exception as e:
         print(f"Error uploading video to S3: {e}")
         return None
+    
+load_dotenv()
+
 
 def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, video_path, s3_ID, s3_key, s3_REGION, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0, frame_skip=5):
     load_dotenv()
@@ -322,7 +333,7 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
     frame_count = 0
 
     temp_output_path = tempfile.mktemp(suffix=".mp4")
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     out = cv2.VideoWriter(temp_output_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
 
     while cap.isOpened():
@@ -330,16 +341,20 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
         if not ret:
             break
         if frame_count % frame_skip == 0:
-            processed_frame = draw_prediction_sctldcnnxyolo(model_yolo=model_yolo, model_sctldcnn=model_sctldcnn, image_array=frame, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn, color=color, thickness=font_thickness, font_scale=font_scale)
+            processed_frame= draw_prediction_sctldcnnxyolo(model_yolo=model_yolo, model_sctldcnn=model_sctldcnn, image_array=frame, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn, color=color, thickness=font_thickness, font_scale=font_scale)
+            print(type(processed_frame))
             out.write(processed_frame)
         frame_count += 1
 
     cap.release()
     out.release()
-    cv2.destroyAllWindows()
 
 
-    BUCKET_NAME = "yolo-sctld-bucket"
+    
+    if not os.path.exists(temp_output_path) or os.path.getsize(temp_output_path) == 0:
+        raise ValueError("Generated video file is empty or not found")
+
+    BUCKET_NAME = "coralbasevidsbucket"
     presigned_url = upload_video_and_generate_presigned_url(temp_output_path, s3_ID, s3_key, s3_REGION, BUCKET_NAME)
     os.remove(temp_output_path)
 
@@ -357,7 +372,7 @@ def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldc
     frame_count = 0
 
     temp_output_path = tempfile.mktemp(suffix=".mp4")
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     out = cv2.VideoWriter(temp_output_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
     total_coral_area = 0 
     total_affected_area = 0
@@ -376,12 +391,10 @@ def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldc
 
     cap.release()
     out.release()
-    cv2.destroyAllWindows()
-
-    coral_coverage_loss_total =(total_affected_area / total_coral_area ) * 100
+    coral_coverage_loss_total = (total_affected_area / total_coral_area ) * 100
 
 
-    BUCKET_NAME = "yolo-sctld-bucket"
+    BUCKET_NAME = "coralbasevidsbucket"
     presigned_url = upload_video_and_generate_presigned_url(temp_output_path, s3_ID, s3_key, s3_REGION, BUCKET_NAME)
 
 

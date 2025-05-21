@@ -76,7 +76,7 @@ async def coralDetection_imgstreaming(
 
     image_array = imgp.convert_color_type(yp.draw_prediction_yolo(model_yolo=CDYOLO_MODEL, image_array=img_nparray, conf_threshold=0.5))
 
-    _, img_encoded = cv2.imencode('.jpg', image_array)
+    _, img_encoded = cv2.imencode('pg', image_array)
 
     # Convert the encoded image to a byte stream
     img_bytes = io.BytesIO(img_encoded.tobytes())
@@ -150,10 +150,6 @@ async def sctldDetection_video(
         temp_file.write(video_data)
         temp_file_path = temp_file.name  
 
-    print("Temporary file saved at:", temp_file_path)
-
-    print(os.getenv("REGION"))
-
     # Call the function to process the video and upload to S3
     url = yp.draw_videoprediction_sctldcnnxyolo_download(
         model_yolo=CDYOLO_MODEL,  
@@ -163,8 +159,8 @@ async def sctldDetection_video(
         s3_key=os.getenv("KEY"),
         s3_REGION=os.getenv("REGION"),
         frame_skip=frame_skip, 
-        conf_threshold_yolo=conf_threshold_yolo,  # Pass conf_threshold_yolo to the function
-        conf_threshold_scltdcnn=conf_threshold_sctldcnn  # Pass conf_threshold_sctldcnn to the function
+        conf_threshold_yolo=conf_threshold_yolo,  
+        conf_threshold_scltdcnn=conf_threshold_sctldcnn 
     )
 
     return {"url": url}
@@ -187,8 +183,6 @@ async def sctldDetection_video(
 
     print("Temporary file saved at:", temp_file_path)
 
-    print(os.getenv("REGION"))
-
     # Call the function to process the video and upload to S3
     url, coral_coverage_loss = yp.draw_videopredictiontracking_sctldcnnxyolo_download(
         model_yolo=CDYOLO_MODEL,  
@@ -198,8 +192,8 @@ async def sctldDetection_video(
         s3_key=os.getenv("KEY"),
         s3_REGION=os.getenv("REGION"),
         frame_skip=frame_skip, 
-        conf_threshold_yolo=conf_threshold_yolo,  # Pass conf_threshold_yolo to the function
-        conf_threshold_scltdcnn=conf_threshold_sctldcnn  # Pass conf_threshold_sctldcnn to the function
+        conf_threshold_yolo=conf_threshold_yolo,  
+        conf_threshold_scltdcnn=conf_threshold_sctldcnn 
     )
     return {
         "url": url, 
