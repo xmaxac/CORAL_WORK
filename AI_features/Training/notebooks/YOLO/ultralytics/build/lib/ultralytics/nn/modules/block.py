@@ -9,8 +9,10 @@ from ultralytics.utils.torch_utils import fuse_conv_and_bn
 
 from .conv import Conv, DWConv, GhostConv, LightConv, RepConv, autopad
 from .transformer import TransformerBlock
+from .new_block import * 
 
 __all__ = (
+    "C2f_MPFB",
     "DFL",
     "HGBlock",
     "HGStem",

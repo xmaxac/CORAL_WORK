@@ -37,6 +37,11 @@ class TaskAlignedAssigner(nn.Module):
         self.beta = beta
         self.eps = eps
 
+    def hello(self):
+        return "world"
+    
+    def power_transform(self, array, power=2):
+        return torch.where(array < 0.5, array ** power, array ** (1/power))
     @torch.no_grad()
     def forward(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
         """
@@ -82,6 +87,7 @@ class TaskAlignedAssigner(nn.Module):
             result = self._forward(*cpu_tensors)
             return tuple(t.to(device) for t in result)
 
+    
     def _forward(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
         """
         Compute the task-aligned assignment.
@@ -149,7 +155,10 @@ class TaskAlignedAssigner(nn.Module):
 
     # *************** APT algorithm implementation ***************
 
-    def get_box_metrics(self, pd_scores, pd_bboxes, gt_labels, gt_bboxes, mask_gt, power=True):
+
+    
+    def get_box_metrics(self, pd_scores, pd_bboxes, gt_labels, gt_bboxes, mask_gt, power=False):
+
         """Compute alignment metric given predicted and ground truth bounding boxes."""
         na = pd_bboxes.shape[-2]
         mask_gt = mask_gt.bool()  # b, max_num_obj, h*w
@@ -171,6 +180,7 @@ class TaskAlignedAssigner(nn.Module):
 
         align_metric = bbox_scores.pow(self.alpha) * overlaps.pow(self.beta)
         return align_metric, overlaps
+    
     
     #####################################################################################
 

@@ -680,8 +680,6 @@ class Concat(nn.Module):
         Returns:
             (torch.Tensor): Concatenated tensor.
         """
-        for i, t in enumerate(x):
-            print(f"[Concat] Input {i} shape: {t.shape}")
         
         target_size = x[0].shape[2:]  # (H, W) of the first input tensor from GSVConv as the universal shape we want for concat
         x_resized = [x[0]]

@@ -76,6 +76,12 @@ ultralytics/cfg/models/rt-detr/rtdetr-l.yaml
 ultralytics/cfg/models/rt-detr/rtdetr-resnet101.yaml
 ultralytics/cfg/models/rt-detr/rtdetr-resnet50.yaml
 ultralytics/cfg/models/rt-detr/rtdetr-x.yaml
+ultralytics/cfg/models/v10/yolo10n_comb.yaml
+ultralytics/cfg/models/v10/yolo10n_lwn.yaml
+ultralytics/cfg/models/v10/yolo10n_mfb.yaml
+ultralytics/cfg/models/v10/yolo10s_comb.yaml
+ultralytics/cfg/models/v10/yolo10s_lwn.yaml
+ultralytics/cfg/models/v10/yolo10s_mfb.yaml
 ultralytics/cfg/models/v10/yolov10b.yaml
 ultralytics/cfg/models/v10/yolov10l.yaml
 ultralytics/cfg/models/v10/yolov10m.yaml
@@ -215,6 +221,7 @@ ultralytics/nn/modules/activation.py
 ultralytics/nn/modules/block.py
 ultralytics/nn/modules/conv.py
 ultralytics/nn/modules/head.py
+ultralytics/nn/modules/new_block.py
 ultralytics/nn/modules/transformer.py
 ultralytics/nn/modules/utils.py
 ultralytics/solutions/__init__.py
