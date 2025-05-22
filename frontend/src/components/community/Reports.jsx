@@ -249,7 +249,7 @@ const Reports = ({ report, currentUserId, onDelete, group }) => {
               }`}
             ></div>
             <p className="text-sm text-gray-500">
-              {`Status: ${status.toUpperCase()}`}
+              {`Status: ${status?.toUpperCase()}`}
             </p>
           </div>
         </div>
