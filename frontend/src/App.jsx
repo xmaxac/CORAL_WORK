@@ -93,28 +93,28 @@ const App = () => {
   const [hasAccess, setHasAccess] = useState(false);
   const {user} = useContext(AppContext)
   
-  // Check for developer access on initial load
-  useEffect(() => {
-    const accessStatus = localStorage.getItem('developerAccess');
-    if (accessStatus === 'granted') {
-      setHasAccess(true);
-    }
-  }, []);
+  // // Check for developer access on initial load
+  // useEffect(() => {
+  //   const accessStatus = localStorage.getItem('developerAccess');
+  //   if (accessStatus === 'granted') {
+  //     setHasAccess(true);
+  //   }
+  // }, []);
 
-  // Function to grant access when correct code is entered
-  const grantAccess = () => {
-    setHasAccess(true);
-  };
+  // // Function to grant access when correct code is entered
+  // const grantAccess = () => {
+  //   setHasAccess(true);
+  // };
 
-  // If no access, show only the developer access popup
-  if (!hasAccess) {
-    return (
-      <div>
-        <DeveloperAccessPopup onValidAccess={grantAccess} />
-        <ToastContainer />
-      </div>
-    );
-  }
+  // // If no access, show only the developer access popup
+  // if (!hasAccess) {
+  //   return (
+  //     <div>
+  //       <DeveloperAccessPopup onValidAccess={grantAccess} />
+  //       <ToastContainer />
+  //     </div>
+  //   );
+  // }
 
   // Main Routing and rendering of components
   return (

@@ -39,6 +39,7 @@ const PhotoDetection = () => {
   // Results states
   const [imageResults, setImageResults] = useState([]);
   const [yoloResult, setYoloResult] = useState(null);
+  const [clossimage, setCLossImage] = useState([]);
   
   // Loading states
   const [isFullLoading, setIsFullLoading] = useState(false);
@@ -47,8 +48,8 @@ const PhotoDetection = () => {
   // Detection parameters
   const [parameters, setParameters] = useState({
     conf_threshold_yolo: 0.7,
-    conf_threshold_sctldcnn: 0.75,
-    frame_skip: 3,
+    conf_threshold_sctldcnn: 0.7,
+    frame_skip: 4,
   });
   
   // References
@@ -174,6 +175,7 @@ const PhotoDetection = () => {
       setIsYoloLoading(true);
 
       const results = [];
+      const corallossresults = [];
 
       for (let i = 0; i < selectedImages.length; i++) {
         const formData = new FormData();
@@ -187,17 +189,33 @@ const PhotoDetection = () => {
 
         try {
           const response = await axios.post(
-            `https://yolo.coralbase.net/sctldDetection_imgstreaming/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
+            `https://yolo.coralbase.net/sctldDetection_img/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
             formData,
             {
               headers: {
                 "Content-Type": "multipart/form-data",
               },
-              responseType: "blob",
+              // responseType: "blob",
             }
           );
 
-          const blob = new Blob([response.data], { type: "image/jpeg" });
+          function base64ToBlob(base64, mime = "image/jpeg") {
+            const byteChars = atob(base64);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteChars.length; offset += 512) {
+              const slice = byteChars.slice(offset, offset + 512);
+              const byteNumbers = new Array(slice.length).fill().map((_, i) => slice.charCodeAt(i));
+              byteArrays.push(new Uint8Array(byteNumbers));
+            }
+
+            return new Blob(byteArrays, { type: mime });
+          }
+
+          const data = response.data;
+          corallossresults.push(data.coral_loss);
+          const base64String = data.image.replace(/^data:image\/jpeg;base64,/, "");
+          const blob = base64ToBlob(base64String);
 
           if (blob.size > 0) {
             const yoloImageUrl = URL.createObjectURL(blob);
@@ -216,6 +234,7 @@ const PhotoDetection = () => {
             error: true,
             fileName: selectedImages[i].name,
           });
+          corallossresults.push(null);
           
           toast.error(`Failed to process image ${i + 1}`, {
             position: "top-center",
@@ -225,6 +244,7 @@ const PhotoDetection = () => {
       }
 
       setImageResults(results);
+      setCLossImage(corallossresults);
       setShowResults(true);
       setCurrentImageIndex(0);
 
@@ -263,7 +283,7 @@ const PhotoDetection = () => {
 
       // Set a longer timeout for video processing
       const yoloResponse = await axios.post(
-        `https://yolo.coralbase.net/sctldDetection_video/${parameters.frame_skip}/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
+        `https://yolo.coralbase.net/sctldDetection_video_track/${parameters.frame_skip}/${parameters.conf_threshold_yolo}/${parameters.conf_threshold_sctldcnn}`,
         formData,
         {
           headers: {
@@ -279,6 +299,8 @@ const PhotoDetection = () => {
           autoClose: 2000,
           hideProgressBar: true,
         });
+
+        console.log("YOLO response:", yoloResponse.data);
 
         setYoloResult(yoloResponse.data);
         setShowResults(true);
@@ -671,11 +693,14 @@ const PhotoDetection = () => {
                           </p>
                         </div>
                       ) : (
-                        <img
-                          src={imageResults[currentImageIndex]?.resultImage}
-                          alt={`YOLO detection result ${currentImageIndex + 1}`}
-                          className="max-w-full h-auto rounded-lg mx-auto"
-                        />
+                        <div>
+                          <img
+                            src={imageResults[currentImageIndex]?.resultImage}
+                            alt={`YOLO detection result ${currentImageIndex + 1}`}
+                            className="max-w-full h-auto rounded-lg mx-auto"
+                          />
+                          <p>{`Coral Loss: ${clossimage[currentImageIndex]?.toFixed(2)}%`}</p>
+                        </div>
                       )}
 
                       {/* Image Navigation Controls */}
@@ -735,6 +760,12 @@ const PhotoDetection = () => {
                   Your browser does not support the video tag.
                 </video>
                 
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    {`Coral Loss: ${yoloResult.coral_coverage_loss.toFixed(2)}%`}
+                  </p>
+                </div>
+
                 <div className="mt-4 text-center">
                   <p className="text-sm text-gray-500">
                     YOLO-processed video with SCTLD detection
