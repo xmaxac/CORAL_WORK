@@ -7,18 +7,18 @@
 ## Table of Contents
 - [Overview](#overview)
 - [Problem Statement](#problem-statement)
-- [Features](#-features)
-  - [AI-Powered Disease Detection](#-ai-powered-disease-detection)
-  - [Interactive Reporting & Visualization](#-interactive-reporting--visualization)
-  - [AI Chatbot Assistant](#-ai-chatbot-assistant)
-  - [Report Groups (Subreddit-Style)](#-report-groups-subreddit-style)
-  - [Report Review & Moderation](#-report-review--moderation)
-  - [User-to-User Chat](#-user-to-user-chat)
-  - [Security Enhancements](#-security-enhancements)
-- [Tech Stack](#-tech-stack)
-- [AI Model Overview](#-ai-model-overview)
-- [Installation & Setup](#-installation--setup)
-- [Summary](#-summary)
+- [Features](#features)
+  - [AI-Powered Disease Detection](#ai-powered-disease-detection)
+  - [Interactive Reporting & Visualization](#interactive-reporting--visualization)
+  - [AI Chatbot Assistant](#ai-chatbot-assistant)
+  - [Report Groups (Subreddit-Style)](#report-groups-subreddit-style)
+  - [Report Review & Moderation](#report-review--moderation)
+  - [User-to-User Chat](#user-to-user-chat)
+  - [Security Enhancements](#security-enhancements)
+- [Tech Stack](#tech-stack)
+- [AI Model Overview](#ai-model-overview)
+- [Installation & Setup](#installation--setup)
+- [Summary](#summary)
 
 ---
 
@@ -155,6 +155,6 @@ npm run dev
 [localhost](http://localhost:5173)
 
 ### Access Online
-[CoralBase](coralbase.net)
+[CoralBase](https://coralbase.net)
 > Account required for full feature access (report creation, AI tools, chat system, group discussions, etc.)
 
