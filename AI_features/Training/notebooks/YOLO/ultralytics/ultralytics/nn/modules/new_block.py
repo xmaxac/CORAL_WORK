@@ -434,11 +434,8 @@ class GSConv(nn.Module):
         self.cv2 = Conv(c_, c_, 5, 1, p, c_, d, Conv.default_act)
 
     def forward(self, x):
-        print(f"[GSConv] Input shape: {x.shape}")
         x1 = self.cv1(x)
-        print(f"[GSConv] After cv1 shape: {x1.shape}")
         x2 = torch.cat((x1, self.cv2(x1)), 1)
-        print(f"[GSConv] After cv2 shape: {x2.shape}")
 
         # shuffle
         # y = x2.reshape(x2.shape[0], 2, x2.shape[1] // 2, x2.shape[2], x2.shape[3])
@@ -450,9 +447,6 @@ class GSConv(nn.Module):
         y = x2.reshape(b_n, 2, h * w)
         y = y.permute(1, 0, 2)
         y = y.reshape(2, -1, n // 2, h, w)
-
-        print(f"[GSConv 0] After reshaping: {y[0].shape}")
-        print(f"[GSConv 1] After reshaping: {y[1].shape}")
 
         return torch.cat((y[0], y[1]), 1)
 

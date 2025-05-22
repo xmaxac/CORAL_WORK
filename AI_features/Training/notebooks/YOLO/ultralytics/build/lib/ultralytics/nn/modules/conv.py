@@ -669,6 +669,8 @@ class Concat(nn.Module):
         self.d = dimension
 
     def forward(self, x):
+        import torch.nn.functional as F
+
         """
         Concatenate input tensors along specified dimension.
 
@@ -678,7 +680,17 @@ class Concat(nn.Module):
         Returns:
             (torch.Tensor): Concatenated tensor.
         """
-        return torch.cat(x, self.d)
+        
+        target_size = x[0].shape[2:]  # (H, W) of the first input tensor from GSVConv as the universal shape we want for concat
+        x_resized = [x[0]]
+        for i in range(1, len(x)):
+            # For the second input tensor, resize it to the same size as the first one. So if its H and W doesnt match, then it is resized to the first input tensor.
+            if x[i].shape[2:] != target_size:
+                x_resized.append(F.interpolate(x[i], size=target_size, mode='nearest'))
+            else:
+                x_resized.append(x[i])  # Other wise, just concatenate the input tensors directly.
+        return torch.cat(x_resized, self.d)
+        # return torch.cat(x, self.d)
 
 
 class Index(nn.Module):
