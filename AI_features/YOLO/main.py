@@ -21,8 +21,8 @@ import tensorflow as tf
 app = FastAPI()
 
 # defualt models to use for inference
-CDYOLO_MODEL = YOLO("../models/YOLO_models/2_ver/best.pt") # coral object detection
-SCTLDCNN_MODEL = tf.keras.models.load_model("../models/CNN_models/1_ver/1.keras") # sctld classification
+CDYOLO_MODEL = YOLO("models/YOLO_models/2_ver/best.pt") # coral object detection
+SCTLDCNN_MODEL = tf.keras.models.load_model("models/CNN_models/1_ver/1.keras") # sctld classification
 
 def load_models():
     global CDYOLO_MODEL, SCTLDCNN_MODEL
@@ -38,7 +38,7 @@ class ModelPaths(BaseModel):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"
+    allow_origins=["*",
     " https://coralbase.net", 
     "https://www.coralbase.net", 
     "https://*.coralbase.net", 
@@ -247,15 +247,3 @@ async def sctldDetection_video(
         "url": url, 
         "coral_coverage_loss" : coral_coverage_loss
         }
-
-
-
-
-
-
-
-
-
-
-
-
