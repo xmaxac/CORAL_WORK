@@ -59,6 +59,7 @@ async def upload_models(
     yolo_model: UploadFile = File(...),
     cnn_model: UploadFile = File(...)
 ):
+    
     import shutil
 
     # Save YOLO model to temp file
@@ -89,10 +90,10 @@ async def upload_models(
     return {"message": "Models uploaded and loaded successfully"}
 
 @app.post("/coralDetection_img/{conf_threshold}")
-async def coralDetection_img(
-    conf_threshold: float,
-    file: UploadFile = File(...),  
-):
+async def coralDetection_img(conf_threshold: float, file: UploadFile = File(...)):
+    """
+    Uploads a coral reef image, runs YOLO coral detection, and returns a base64-encoded result image.
+    """
     image_data = await file.read()
     print(f"Received file with size: {len(image_data)} bytes")
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
@@ -108,12 +109,11 @@ async def coralDetection_img(
     img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
     return img_base64
-
 @app.post("/coralDetection_imgstreaming/{conf_threshold}")
-async def coralDetection_imgstreaming(
-    conf_threshold: float, 
-    file: UploadFile = File(...)
-    ):
+async def coralDetection_imgstreaming(conf_threshold: float, file: UploadFile = File(...)):
+    """
+    Streams the image back with YOLO coral detection overlay applied.
+    """
     image_data = await file.read()
     print(f"Received file with size: {len(image_data)} bytes")
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
@@ -133,11 +133,11 @@ async def coralDetection_imgstreaming(
     return StreamingResponse(img_bytes, media_type="image/jpeg")
 
 @app.post("/sctldDetection_img/{conf_threshold_yolo}/{conf_threshold_sctldcnn}")
-async def sctldDetection_img(
-    conf_threshold_yolo: float, 
-    conf_threshold_sctldcnn: float,
-    file: UploadFile = File(...)
-    ):
+async def sctldDetection_img(conf_threshold_yolo: float, conf_threshold_sctldcnn: float, file: UploadFile = File(...)):
+    """
+    Processes a coral image using both YOLO and SCTLD CNN classifiers.
+    Returns a base64-encoded image and coral loss estimation.
+    """
     image_data = await file.read()
     print(f"Received file with size: {len(image_data)} bytes")
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
@@ -159,11 +159,10 @@ async def sctldDetection_img(
     })
 
 @app.post("/sctldDetection_img_streaming/{conf_threshold_yolo}/{conf_threshold_sctldcnn}")
-async def sctldDetection_img(
-    conf_threshold_yolo: float, 
-    conf_threshold_sctldcnn: float,
-    file: UploadFile = File(...)
-    ):
+async def sctldDetection_img(conf_threshold_yolo: float, conf_threshold_sctldcnn: float, file: UploadFile = File(...)):
+    """
+    Streams a SCTLD-processed image using both YOLO and CNN models.
+    """
     image_data = await file.read()
     print(f"Received file with size: {len(image_data)} bytes")
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
@@ -185,12 +184,11 @@ async def sctldDetection_img(
 
 
 @app.post("/sctldDetection_video/{frame_skip}/{conf_threshold_yolo}/{conf_threshold_sctldcnn}")
-async def sctldDetection_video(
-    frame_skip: int,
-    conf_threshold_yolo: float,
-    conf_threshold_sctldcnn: float,
-    file: UploadFile = File(...)
-):
+async def sctldDetection_video(frame_skip: int, conf_threshold_yolo: float, conf_threshold_sctldcnn: float, file: UploadFile = File(...)):
+    """
+    Uploads a video for SCTLD + coral detection.
+    Returns a URL of the processed video uploaded to S3.
+    """
     load_dotenv()
     video_data = await file.read()
 
@@ -216,12 +214,10 @@ async def sctldDetection_video(
 
 
 @app.post("/sctldDetection_video_track/{frame_skip}/{conf_threshold_yolo}/{conf_threshold_sctldcnn}")
-async def sctldDetection_video(
-    frame_skip: int,
-    conf_threshold_yolo: float,
-    conf_threshold_sctldcnn: float,
-    file: UploadFile = File(...)
-):
+async def sctldDetection_video(frame_skip: int, conf_threshold_yolo: float, conf_threshold_sctldcnn: float, file: UploadFile = File(...)):
+    """
+    Uploads a video, applies tracking SCTLD + coral detection, and returns video URL and coral loss data.
+    """
     load_dotenv()
     video_data = await file.read()
 

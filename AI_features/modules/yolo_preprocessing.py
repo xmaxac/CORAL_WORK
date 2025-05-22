@@ -14,22 +14,23 @@ def call():
     print("yolo_preprocessing module called!")
 
 def getPredictionInfo(model, image_array, conf_threshold=0.0):
+    """
+    Runs YOLO model prediction and filters boxes based on confidence threshold.
+    
+    Parameters:
+        model: YOLO model object
+        image_array (np.ndarray): Input image
+        conf_threshold (float): Confidence threshold for filtering predictions
+    
+    Returns:
+        results: Raw model output
+        boxes: Filtered bounding boxes
+        confidences: Confidence scores of boxes
+        class_ids: Class IDs of predictions
+        image_array: Original image
+    """ 
     if image_array is None:
         raise ValueError("Could not load the image. Check the path.")
-
-    # if tracking == True:
-    #     results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
-    #     if results is not None:
-    #         boxes = results[0].boxes.xyxy.cpu().numpy()
-    #         confs = results[0].boxes.conf.cpu().numpy()
-    #         ids =  results[0].boxes.id
-
-    #     if ids is not None:
-    #         valid_indices = confs >= 0.6
-    #         boxes = boxes[valid_indices]
-    #         confs = confs[valid_indices]
-    #         ids = ids[valid_indices]
-    #     return results, boxes, confs, ids, image_array
 
     results = model.predict(image_array)
 
@@ -46,6 +47,12 @@ def getPredictionInfo(model, image_array, conf_threshold=0.0):
 
 
 def draw_prediction_yolo(model_yolo, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold=0.0):
+    """
+    Draws YOLO predictions with bounding boxes and confidence labels.
+
+    Returns:
+        image_array with drawn predictions
+    """
     results, boxes, confidences, class_ids, image_array = getPredictionInfo(model=model_yolo, image_array=image_array, conf_threshold=conf_threshold)
     if boxes is None or len(boxes) == 0:
       return imgp.convert_color_type(image_array)
@@ -55,7 +62,7 @@ def draw_prediction_yolo(model_yolo, image_array, color=(4, 225, 239), thickness
 
         cv2.rectangle(image_array, xy1, xy2, color, thickness)
 
-        label = f"Class Coral: {conf:.2f}"
+        label = f"Coral ({round(conf * 100 , 2)})%"
 
         # Get text size for background rectangle
         (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
@@ -69,6 +76,14 @@ def draw_prediction_yolo(model_yolo, image_array, color=(4, 225, 239), thickness
     return imgp.convert_color_type(image_array)
 
 def crop_prediction(image_array, model, conf_threshold=0.0):
+    """
+    Crops YOLO-detected regions from the input image.
+
+    Returns:
+        cropped_image_arrays: List of cropped images
+        boxes: Bounding boxes of the crops
+        image_array: Original image
+    """
     result, boxes, confidences, class_ids, image_array = getPredictionInfo(model=model, image_array=image_array, conf_threshold=conf_threshold)
     if len(boxes) != 0:
       cropped_image_arrays = []
@@ -78,7 +93,14 @@ def crop_prediction(image_array, model, conf_threshold=0.0):
           cropped_image_arrays.append(cropped_region)
       return cropped_image_arrays, boxes, image_array
     
-def getPredictionInfo_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, conf_threshold_yolo=0.0,  conf_threshold_scltdcnn=0.0):
+def getPredictionInfo_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0):
+    """
+    Combines YOLO + CNN model to detect SCTLD-affected coral regions.
+
+    Returns:
+        filtered_images, filtered_predictions, filtered_labels, 
+        filtered_confidences, filtered_boxes, original image_array
+    """
     SCTLD_CLASSES = ['sctld_coral', 'unaffected_coral']
     result = crop_prediction(model=model_yolo, image_array=image_array, conf_threshold=conf_threshold_yolo)
     if result is not None:
@@ -113,7 +135,13 @@ def getPredictionInfo_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, con
     else:
         return [], [], [], [], [], image_array
     
-def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0,  conf_threshold_scltdcnn=0.0):
+def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0):
+    """
+    Draws bounding boxes around SCTLD-infected coral and calculates affected area percentage.
+
+    Returns:
+        image_array with drawn predictions, percentage of coral coverage loss
+    """
     images_sctld = []
     confidence_scores_sctld = []
     boxes_sctld = []  
@@ -126,13 +154,11 @@ def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color
         area = (x2 - x1) * (y2 - y1)
         total_area += area
 
-    print(type(image_array))
         
     image_array = imgp.convert_color_type(image_array)
-    print(type(image_array))
-    
+
     if len(images) == 0:
-        return imgp.convert_color_type(image_array)
+        return imgp.convert_color_type(image_array), 0.0
     for i in range(len(images)):
         if prediction_labels[i] == 0:
             images_sctld.append(images[i])
@@ -148,13 +174,15 @@ def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color
     else:
         coral_coverage_loss = 0
 
-    print("coverage loss: " + str(coral_coverage_loss))
     for xyxy, conf, image in zip(boxes_sctld, confidence_scores_sctld, images_sctld):
         xy1 = (int(xyxy[0]), int(xyxy[1]))
         xy2 = (int(xyxy[2]), int(xyxy[3]))
         cv2.rectangle(image_array, xy1, xy2, color, thickness)
 
-        label = f"SCTLD {conf:.2f}"
+        confidence = conf
+
+        label = f"SCTLD ({round(confidence * 100, 2)}%)"
+        print(label)
 
         # Get text size for background rectangle
         (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
@@ -165,9 +193,15 @@ def draw_prediction_sctldcnnxyolo(model_yolo, model_sctldcnn, image_array, color
         cv2.rectangle(image_array, label_bg_xy1, label_bg_xy2, color, -1)
         cv2.putText(image_array, label, (xy1[0] + 2, xy1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
 
-    return imgp.convert_color_type(image_array)
+    return imgp.convert_color_type(image_array), coral_coverage_loss
 
 def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold=0.5, tracker_config="bytetrack.yaml"):
+    """
+    Draws YOLO tracking predictions with object IDs.
+
+    Returns:
+        image_array with drawn bounding boxes, number of unique tracked objects
+    """
     results = model.track(image_array, show=False, persist=True, tracker='bytetrack.yaml')
     if results is not None:
         boxes = results[0].boxes.xyxy.cpu()
@@ -183,8 +217,6 @@ def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239
         print(ids)
 
         unique_ids.update(ids.tolist())
-
-        print(f"Total unique tracked objects so far: {len(unique_ids)}")
 
         for box, conf, track_id in zip(boxes, confs, ids):
             x1, y1, x2, y2 = map(int, box.tolist())
@@ -205,8 +237,32 @@ def draw_prediction_yolotrack(unique_ids, model, image_array, color=(4, 225, 239
 
 
 
-def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image_array, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.5, conf_threshold_scltd=0.7, tracker_config="bytetrack.yaml"):
-    CLASSES = ["SCTLD", "Coral"]
+
+def draw_prediction_sctldcnn_track(
+    unique_ids,
+    model_yolo,
+    model_sctldcnn,
+    image_array,
+    color=(4, 225, 239),
+    thickness=2,
+    font_scale=0.5,
+    font_thickness=2,
+    conf_threshold_yolo=0.5,
+    conf_threshold_scltd=0.7,
+    tracker_config="bytetrack.yaml"
+):
+    """
+    Tracks corals with YOLO model, crops each detection, runs SCTLD CNN on crops,
+    draws bounding boxes with IDs and SCTLD confidence on corals detected as affected,
+    and computes coral coverage loss.
+
+
+    Returns:
+        Annotated image,
+        Percentage of coral coverage lost due to SCTLD,
+        Total coral area detected,
+        Total affected area detected.
+    """
     total_area = 0 
     affected_area = 0
     results = model_yolo.track(image_array, show=False, persist=True, tracker=tracker_config)
@@ -225,7 +281,6 @@ def draw_prediction_sctldcnn_track(unique_ids, model_yolo, model_sctldcnn, image
     ids = ids[valid_indices]
 
     unique_ids.update(ids.tolist())
-    print(f"Total unique tracked objects so far: {len(unique_ids)}")
 
 
     cropped_image_arrays = {}
@@ -287,6 +342,7 @@ def generate_random_string(length=12):
     return random_string
   
 def upload_video_and_generate_presigned_url(temp_file_path, s3_ID, s3_key, s3_REGION, BUCKET_NAME):
+    """Upload video file to S3 and generate a public URL via CloudFront."""
     try:
         # Initialize the S3 client
         s3_client = boto3.client(
@@ -321,7 +377,29 @@ def upload_video_and_generate_presigned_url(temp_file_path, s3_ID, s3_key, s3_RE
 load_dotenv()
 
 
-def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, video_path, s3_ID, s3_key, s3_REGION, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0, frame_skip=5):
+def draw_videopredictiontracking_sctldcnnxyolo_download(
+    model_yolo,
+    model_sctldcnn,
+    video_path,
+    s3_ID,
+    s3_key,
+    s3_REGION,
+    color=(4, 225, 239),
+    thickness=2,
+    font_scale=0.5,
+    font_thickness=2,
+    conf_threshold_yolo=0.0,
+    conf_threshold_scltdcnn=0.0,
+    frame_skip=5
+):
+    """
+    Processes a video frame-by-frame, detects & tracks corals, classifies SCTLD, draws bounding boxes,
+    writes output to a video file, uploads to S3, and returns the CloudFront URL and coverage loss..
+
+    Returns:
+        presigned URL string for the uploaded video for streaming,
+        total coral coverage loss percentage.
+    """
     load_dotenv()
 
     # Check if .env variables are loaded
@@ -332,8 +410,9 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
     frame_skip = frame_skip 
     frame_count = 0
 
-    temp_output_path = tempfile.mktemp(suffix=".mp4")
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmpfile:
+        temp_output_path = tmpfile.name
+    fourcc = cv2.VideoWriter_fourcc(*'VP80')
     out = cv2.VideoWriter(temp_output_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
 
     while cap.isOpened():
@@ -341,7 +420,7 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
         if not ret:
             break
         if frame_count % frame_skip == 0:
-            processed_frame= draw_prediction_sctldcnnxyolo(model_yolo=model_yolo, model_sctldcnn=model_sctldcnn, image_array=frame, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn, color=color, thickness=font_thickness, font_scale=font_scale)
+            processed_frame, coral_loss = draw_prediction_sctldcnnxyolo(model_yolo=model_yolo, model_sctldcnn=model_sctldcnn, image_array=frame, conf_threshold_yolo=conf_threshold_yolo, conf_threshold_scltdcnn=conf_threshold_scltdcnn, color=color, thickness=font_thickness, font_scale=font_scale)
             print(type(processed_frame))
             out.write(processed_frame)
         frame_count += 1
@@ -349,8 +428,6 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
     cap.release()
     out.release()
 
-
-    
     if not os.path.exists(temp_output_path) or os.path.getsize(temp_output_path) == 0:
         raise ValueError("Generated video file is empty or not found")
 
@@ -360,7 +437,30 @@ def draw_videoprediction_sctldcnnxyolo_download(model_yolo, model_sctldcnn, vide
 
     return presigned_url
 
-def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldcnn, video_path, s3_ID, s3_key, s3_REGION, color=(4, 225, 239), thickness=2, font_scale=0.5, font_thickness=2, conf_threshold_yolo=0.0, conf_threshold_scltdcnn=0.0, frame_skip=5):
+def draw_videopredictiontracking_sctldcnnxyolo_download(
+    model_yolo,
+    model_sctldcnn,
+    video_path,
+    s3_ID,
+    s3_key,
+    s3_REGION,
+    color=(4, 225, 239),
+    thickness=2,
+    font_scale=0.5,
+    font_thickness=2,
+    conf_threshold_yolo=0.0,
+    conf_threshold_scltdcnn=0.0,
+    frame_skip=5
+):
+    """
+    Processes a video to track coral and SCTLD (Stony Coral Tissue Loss Disease) lesions,
+    annotates the frames with YOLO and CNN-based predictions, computes the total coral
+    coverage loss, and uploads the result to an AWS S3 bucket.
+
+    Returns:
+            -  A temporary URL to stream the annotated video from S3.
+            - : Estimated percentage of coral area affected by SCTLD.
+    """
     load_dotenv()
     unique_ids = set()
     # Check if .env variables are loaded
@@ -371,8 +471,10 @@ def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldc
     frame_skip = frame_skip 
     frame_count = 0
 
-    temp_output_path = tempfile.mktemp(suffix=".mp4")
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmpfile:
+        temp_output_path = tmpfile.name
+    fourcc = cv2.VideoWriter_fourcc(*'VP80')
+
     out = cv2.VideoWriter(temp_output_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
     total_coral_area = 0 
     total_affected_area = 0
@@ -401,4 +503,3 @@ def draw_videopredictiontracking_sctldcnnxyolo_download(model_yolo, model_sctldc
     os.remove(temp_output_path)
 
     return presigned_url, coral_coverage_loss_total
-
