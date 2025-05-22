@@ -384,7 +384,7 @@ const NewReport = () => {
       if (response.data && response.data.address) {
         setData((prev) => ({
           ...prev,
-          countryCode: response.data.address.country_code.toUpperCase(),
+          countryCode: response.data.address.country_code?.toUpperCase(),
         }));
       }
     } catch (error) {
