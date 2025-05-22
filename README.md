@@ -22,14 +22,14 @@
 
 ---
 
-## Overview  
+## 📌 Overview  
 CoralBase is an open-source web platform that helps researchers, conservationists, and marine biologists track, analyze, and combat **Stony Coral Tissue Loss Disease (SCTLD)**. It combines **AI-based detection**, **crowdsourced reporting**, **real-time mapping**, and **research collaboration tools** to streamline coral disease research and response.
 
 Unlike static databases, CoralBase actively verifies reports using AI, supports multimedia, enables community moderation, and provides meaningful data insights.
 
 ---
 
-## Problem Statement  
+## 🚨 Problem Statement  
 SCTLD is one of the most aggressive and fast-spreading threats to coral reefs across the Caribbean and Western Atlantic. Despite the ecological importance of coral reefs, **accurate disease tracking and data sharing remain fragmented and outdated**.
 
 ### CoralBase directly addresses this by:
@@ -40,7 +40,7 @@ SCTLD is one of the most aggressive and fast-spreading threats to coral reefs ac
 
 ---
 
-## Features  
+## ✨ Features  
 
 ### AI-Powered Disease Detection  
 - Uses **YOLOv8** for fast, accurate detection of SCTLD in uploaded coral **images and videos**.  
@@ -103,19 +103,9 @@ SCTLD is one of the most aggressive and fast-spreading threats to coral reefs ac
 | **Backend**        | Node.js, Express |
 | **Database**       | PostgreSQL (AWS RDS) |
 | **Storage**        | AWS S3 (images, videos, docs) |
-| **AI/ML**          | YOLOv8 (PyTorch) |
+| **AI/ML**          | YOLO (PyTorch) |
 | **Deployment**     | Docker, **AWS Lightsail** (Backend), AWS S3 + CloudFront (Frontend) |
 
----
-
-## AI Model Overview  
-
-| Task                    | Model    | Metric         |
-|-------------------------|----------|----------------|
-| Coral Detection         | YOLOv8   | 92% mAP@0.5    |
-| SCTLD Classification    | YOLOv8   | 94% Precision  |
-
-> YOLOv8 is now the only detection model used for better speed and accuracy.
 
 ---
 
